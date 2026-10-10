@@ -334,8 +334,6 @@ class AlphaESSPortalApi:
             allowed_modes = {1, 2, 3, 4} if generation == "g2T" else {0, 1, 2, 3, 4}
             if charge_mode not in allowed_modes:
                 raise ValueError("Nicht unterstützter Lademodus")
-            if generation == "g2T" and settings.get("smartMode") is True and charge_mode == 4:
-                raise ValueError("Smart Mode benötigt Langsamladung, Schonladung oder Schnellladung")
             settings["chargeMode"] = charge_mode
 
         if charge_current is not None:
@@ -372,8 +370,8 @@ class AlphaESSPortalApi:
                     )
                 if settings.get("obcPhase") != 3:
                     raise ValueError("Für Smart Mode muss die OBC-Phasenwahl auf 3-phasig stehen")
-                if settings.get("chargeMode") not in {1, 2, 3}:
-                    raise ValueError("Smart Mode benötigt Langsamladung, Schonladung oder Schnellladung")
+                if settings.get("chargeMode") not in {1, 2, 3, 4}:
+                    raise ValueError("Für Smart Mode muss ein gültiger Lademodus ausgewählt sein")
             settings["smartMode"] = smart_mode
 
         if household_current is not None:

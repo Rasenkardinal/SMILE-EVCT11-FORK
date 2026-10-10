@@ -132,6 +132,17 @@ class AlphaESSSmartModeSwitch(AlphaESSWallboxEntity, SwitchEntity):
         return super().available and self.settings_generation == "g2T"
 
     @property
+    def extra_state_attributes(self) -> dict[str, str]:
+        return {
+            "Hinweis": (
+                "Zeigt die gespeicherte Smart-Mode-Einstellung laut Portal, "
+                "nicht ihre tatsächliche Wirksamkeit. Bei kundenspezifischer "
+                "Ladeleistung kann sie eingeschaltet bleiben; laut "
+                "Betreiberbeobachtung wird sie dort serverseitig ignoriert."
+            )
+        }
+
+    @property
     def is_on(self) -> bool | None:
         value = self.settings.get("smartMode")
         return value if isinstance(value, bool) else None

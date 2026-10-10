@@ -1,14 +1,24 @@
 # Changelog
 
-## Fork – 2026-10-10 (auf main, noch kein eigenes Release)
+## Fork 0.6.0 – 2026-10-10 (auf main, noch kein eigenes Release)
 
+- Gegenseitige Sperren zwischen Smart Mode und kundenspezifischer Ladeleistung
+  entfernt. Moduswechsel ändern das gespeicherte Smart-Mode-Flag nicht.
+  Zeitsteuerungs-, Phasen- und Gültigkeitsprüfungen bleiben bestehen.
+- Hinweis am Smart-Mode-Schalter ergänzt: Gespeicherter Portal-Zustand ist
+  nicht mit tatsächlich wirksamer Regelung gleichzusetzen.
+- Regressionstests für Moduswechsel, Smart-Mode-Aktivierung bei
+  kundenspezifischer Ladeleistung und verbleibende Schutzprüfungen ergänzt.
 - Kundenspezifischen Ladestrom standardmäßig als Slider von 6 bis 16 A
   in 1-A-Schritten darstellen. Die übrigen Zahlenfelder bleiben unverändert.
 - Entitätskennungen, API-Steuerung und Schutzprüfungen bleiben unverändert.
 - Regressionstest für den Slider, seine Grenzen und Schrittweite sowie die
-  unveränderten Zahlenfelder ergänzt; insgesamt 27 Tests bestanden.
+  unveränderten Zahlenfelder ergänzt; mit den Smart-Mode-Tests insgesamt
+  32 Tests bestanden.
 - Zweck, Herkunft und Grenzen des persönlichen Forks in der README erläutert.
   HACS-Installation, Wechsel vom Original und Updates über main dokumentiert.
+- Manifest-Version von 0.5.7 auf 0.6.0 angehoben, um den funktional
+  erweiterten Fork-Stand zu kennzeichnen.
 
 ## Übernommener Stand – Noch nicht veröffentlicht – Testerfeedback
 

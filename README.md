@@ -1,5 +1,7 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
+> **Fork-Version 0.6.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
+
 ## Zweck dieses Forks
 
 [Rasenkardinal/SMILE-EVCT11-FORK](https://github.com/Rasenkardinal/SMILE-EVCT11-FORK)
@@ -21,6 +23,17 @@ wurde durch diesen Fork nicht implementiert.
 
 ### Eigene Änderungen gegenüber dem Original
 
+- **10.10.2026 – Smart Mode und kundenspezifische Ladeleistung:** Die beiden
+  gegenseitigen Sperren entfallen. Zwischen Langsam-/Schon-/Schnellladung und
+  kundenspezifischer Ladeleistung kann gewechselt werden, ohne die gespeicherte
+  Smart-Mode-Einstellung zu ändern. Smart Mode kann auch bei kundenspezifischer
+  Ladeleistung eingeschaltet werden, sofern die übrigen Prüfungen erfüllt sind.
+  Laut Betreiberbeobachtung ignoriert der Server Smart Mode in diesem Lademodus.
+  Dieses Verhalten ist nicht unabhängig für alle Firmwarestände bestätigt.
+  Der Schalter zeigt das gespeicherte Flag, nicht eine bestätigte Wirksamkeit.
+- Die Smart-Mode-Prüfungen für Zeitsteuerung, 3-phasige OBC-Sollwahl und
+  gültige Lademodi bleiben bestehen. Ein Regressionstest prüft den Wechsel in
+  beide Richtungen und die unveränderten übrigen Konfigurationswerte.
 - **10.10.2026 – Ladestrom als Slider:** Die Entität
   `number.alphaess_wallbox_ladestrom_kundenspezifisch` verwendet standardmäßig
   einen Slider von **6 bis 16 A in 1-A-Schritten** statt eines Zahlenfelds.
@@ -33,12 +46,12 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Nach dieser Änderung bestanden **27 automatisierte Tests**;
+  Mit den Smart-Mode-Änderungen bestehen insgesamt **32 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
 Die Fork-Änderungen stehen derzeit auf **`main`**. Es gibt noch kein eigenes
-Fork-Release; die im Manifest enthaltene Version **0.5.7** stammt vom
-Originalprojekt und kennzeichnet nicht die zusätzlichen Fork-Änderungen.
+Fork-Release; die im Manifest enthaltene Version **0.6.0** kennzeichnet
+den Fork-Stand mit Slider und angepasster Smart-Mode-Logik.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 ## Übernommene Projektbeschreibung
@@ -160,7 +173,15 @@ Smart Mode wird nur für G2T angeboten. Beim Aktivieren prüft die Integration:
 
 - Zeitgesteuertes Aufladen darf nicht aktiv sein.
 - Die OBC-Phasenwahl muss auf **3-phasig** stehen.
-- Der Lademodus muss **Langsamladung, Schonladung oder Schnellladung** sein.
+- Ein gültiger Lademodus muss ausgewählt sein; im Fork ist auch
+  **Kundenspezifische Ladeleistung** zulässig.
+
+Der Fork lässt das Smart-Mode-Flag beim Wechsel des Lademodus unverändert.
+Laut Betreiberbeobachtung wird Smart Mode bei kundenspezifischer Ladeleistung
+serverseitig ignoriert. Ein eingeschalteter Schalter bestätigt daher keine
+aktive Smart-Mode-Regelung in diesem Modus. Ob der Server das Flag beim Wechsel
+erhält und beim Rückwechsel wieder berücksichtigt, ist an der eigenen Wallbox
+zu prüfen; die Integration erzwingt dies nicht.
 
 Ein Wechsel auf Zeitgesteuertes Aufladen bei aktivem Smart Mode wird blockiert. Vor einem manuellen Wechsel auf 1- oder 2-phasig muss Smart Mode deaktiviert werden.
 

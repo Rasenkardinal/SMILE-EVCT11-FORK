@@ -157,6 +157,64 @@ class FakePortal(ProductionMethods):
 
 
 class SettingsWriteTests(unittest.IsolatedAsyncioTestCase):
+    async def test_mode_changes_preserve_enabled_smart_mode(self):
+        portal = FakePortal()
+        portal.settings.update(chargeMode=1, smartMode=True, obcPhase=3)
+        original = copy.deepcopy(portal.configuration)
+        for mode in (4, 1):
+            await portal.async_update_wallbox_settings(charge_mode=mode)
+            expected = copy.deepcopy(original)
+            expected["evCharger"][0]["g2T"]["chargeMode"] = mode
+            self.assertEqual(portal.configuration, expected)
+        self.assertEqual(len(portal.patches), 2)
+
+    async def test_smart_mode_can_be_enabled_in_custom_mode(self):
+        portal = FakePortal()
+        portal.settings["obcPhase"] = 3
+        original = copy.deepcopy(portal.configuration)
+        await portal.async_update_wallbox_settings(smart_mode=True)
+        original["evCharger"][0]["g2T"]["smartMode"] = True
+        self.assertEqual(portal.configuration, original)
+        await portal.async_update_wallbox_settings(smart_mode=False)
+        self.assertFalse(portal.settings["smartMode"])
+        self.assertEqual(portal.settings["chargeMode"], 4)
+
+    async def test_smart_mode_still_rejects_invalid_or_missing_modes(self):
+        for mode in (0, 5, None):
+            with self.subTest(mode=mode):
+                portal = FakePortal()
+                portal.settings.update(chargeMode=mode, obcPhase=3)
+                with self.assertRaises(ValueError):
+                    await portal.async_update_wallbox_settings(smart_mode=True)
+                self.assertEqual(portal.patches, [])
+
+    async def test_g1t_mode_changes_and_smart_mode_rejection_remain(self):
+        portal = FakePortal()
+        settings = portal.wallbox.pop("g2T")
+        portal.wallbox["g1T"] = settings
+        for mode in (0, 4):
+            await portal.async_update_wallbox_settings(charge_mode=mode)
+            self.assertEqual(portal.wallbox["g1T"]["chargeMode"], mode)
+        with self.assertRaises(ValueError):
+            await portal.async_update_wallbox_settings(smart_mode=True)
+        self.assertEqual(len(portal.patches), 2)
+
+    async def test_smart_mode_schedule_and_phase_guards_remain(self):
+        for settings, update in (
+            ({"chargeStrategy": 1, "obcPhase": 3}, {"smart_mode": True}),
+            ({"obcPhase": 1}, {"smart_mode": True}),
+            ({"smartMode": True, "obcPhase": 3}, {"charge_strategy": 1}),
+            ({"smartMode": True, "obcPhase": 3}, {"obc_phase": 1}),
+        ):
+            with self.subTest(settings=settings, update=update):
+                portal = FakePortal()
+                portal.settings.update(settings)
+                original = copy.deepcopy(portal.configuration)
+                with self.assertRaises(ValueError):
+                    await portal.async_update_wallbox_settings(**update)
+                self.assertEqual(portal.configuration, original)
+                self.assertEqual(portal.patches, [])
+
     async def test_different_fields_are_serialized_and_preserved(self):
         portal = FakePortal()
         original_periods = copy.deepcopy(portal.settings["timePeriods"])
