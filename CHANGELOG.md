@@ -1,6 +1,6 @@
 # Changelog
 
-## Fork 0.6.1 – 2026-10-10 (auf main, noch kein eigenes Release)
+## Fork 0.6.1 – 2026-10-10
 
 - Globale Ladestromeingabe unabhängig vom Lademodus freigegeben:
   Modus-4-Verfügbarkeitsprüfung und Schreibsperre entfernt.
@@ -10,6 +10,7 @@
 - Regressionstest für Verfügbarkeit und Schreiben in allen Lademodi sowie
   Nichtverfügbarkeit bei Verbindungsfehlern ergänzt; insgesamt 33 Tests bestanden.
 - Manifest-Version auf 0.6.1 angehoben.
+- Erstes eigenes GitHub-Release v0.6.1 für die Versionsauswahl in HACS.
 
 ## Fork 0.6.0 – 2026-10-10 (auf main, noch kein eigenes Release)
 
