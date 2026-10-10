@@ -9,6 +9,7 @@ or wallbox are required.
 from __future__ import annotations
 
 import ast
+import asyncio
 import copy
 from pathlib import Path
 from types import SimpleNamespace
@@ -41,6 +42,60 @@ def extract_helpers():
 
 
 NS = extract_helpers()
+
+
+def load_current_entity():
+    source_file = COMPONENT / "number.py"
+    source = ast.parse(source_file.read_text(encoding="utf-8"))
+    cls = next(
+        node for node in source.body
+        if isinstance(node, ast.ClassDef)
+        and node.name == "AlphaESSWallboxChargeCurrentNumber"
+    )
+    base = type("CurrentBase", (), {
+        "available": property(lambda self: self.coordinator.connected),
+    })
+    namespace = {
+        "_CurrentNumberBase": base,
+        "NumberMode": SimpleNamespace(SLIDER="slider"),
+        "HomeAssistantError": RuntimeError,
+        "AuthenticationError": type("AuthenticationError", (Exception,), {}),
+        "PortalConnectionError": type("PortalConnectionError", (Exception,), {}),
+    }
+    module = ast.fix_missing_locations(ast.Module(
+        body=[ast.ImportFrom(module="__future__", names=[
+            ast.alias(name="annotations")
+        ], level=0), cls],
+        type_ignores=[],
+    ))
+    exec(compile(module, str(source_file), "exec"), namespace)
+    return namespace["AlphaESSWallboxChargeCurrentNumber"]
+
+
+class CurrentModeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_current_is_available_and_writable_in_all_modes(self):
+        cls = load_current_entity()
+        for mode in range(5):
+            with self.subTest(mode=mode):
+                writes = []
+
+                async def update(**kwargs):
+                    writes.append(kwargs)
+
+                coordinator = SimpleNamespace(
+                    connected=True,
+                    api=SimpleNamespace(async_update_wallbox_settings=update),
+                    async_request_refresh=lambda: asyncio.sleep(0),
+                )
+                entity = cls.__new__(cls)
+                entity.coordinator = coordinator
+                entity.settings = {"chargeMode": mode}
+                self.assertTrue(entity.available)
+                await entity.async_set_native_value(10)
+                self.assertEqual(writes, [{"charge_current": 10}])
+                self.assertEqual(entity.settings["chargeMode"], mode)
+                coordinator.connected = False
+                self.assertFalse(entity.available)
 
 
 class FakeApi:

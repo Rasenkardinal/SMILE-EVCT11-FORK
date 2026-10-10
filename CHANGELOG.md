@@ -1,5 +1,16 @@
 # Changelog
 
+## Fork 0.6.1 – 2026-10-10 (auf main, noch kein eigenes Release)
+
+- Globale Ladestromeingabe unabhängig vom Lademodus freigegeben:
+  Modus-4-Verfügbarkeitsprüfung und Schreibsperre entfernt.
+  Änderungen wechseln den Lademodus nicht. Verbindungsverfügbarkeit,
+  Stromgrenzen und Zeitfenster-Ströme bleiben unverändert.
+- Hinweis zur Annahme und Wirksamkeit des Sollwerts in anderen Modi ergänzt.
+- Regressionstest für Verfügbarkeit und Schreiben in allen Lademodi sowie
+  Nichtverfügbarkeit bei Verbindungsfehlern ergänzt; insgesamt 33 Tests bestanden.
+- Manifest-Version auf 0.6.1 angehoben.
+
 ## Fork 0.6.0 – 2026-10-10 (auf main, noch kein eigenes Release)
 
 - Gegenseitige Sperren zwischen Smart Mode und kundenspezifischer Ladeleistung

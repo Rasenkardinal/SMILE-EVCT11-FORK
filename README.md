@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.6.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.6.1 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -39,19 +39,23 @@ wurde durch diesen Fork nicht implementiert.
   einen Slider von **6 bis 16 A in 1-A-Schritten** statt eines Zahlenfelds.
   Die tatsächliche Entitäts-ID kann je nach Home-Assistant-Einrichtung abweichen.
 - Hausstrom-Einstellung und Zeitfenster-Ströme bleiben Zahlenfelder.
-  API-Aufrufe, Schutzprüfungen und die Voraussetzung
-  **Kundenspezifische Ladeleistung** für die Ladestromeingabe bleiben unverändert.
+  Der globale Ladestrom-Slider ist unabhängig vom Lademodus bedienbar.
+  Änderungen schreiben nur den Sollwert und wechseln nicht automatisch
+  auf **Kundenspezifische Ladeleistung**. Ob der Server den Wert in anderen
+  Modi annimmt, speichert oder berücksichtigt, muss am eigenen Gerät geprüft
+  werden. Verbindungsfehler und Portal-Ablehnungen werden weiterhin angezeigt.
+  Grenzen von 6–16 A und die Modusprüfung der Zeitfenster-Ströme bleiben bestehen.
 - Individuelle Dashboard-Karten können die Darstellung selbst bestimmen.
   Der Slider ändert nur den Standard-Eingabemodus der Entität, nicht die
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den Smart-Mode-Änderungen bestehen insgesamt **32 automatisierte Tests**;
+  Mit den Smart-Mode- und Ladestrom-Änderungen bestehen insgesamt **33 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
 Die Fork-Änderungen stehen derzeit auf **`main`**. Es gibt noch kein eigenes
-Fork-Release; die im Manifest enthaltene Version **0.6.0** kennzeichnet
-den Fork-Stand mit Slider und angepasster Smart-Mode-Logik.
+Fork-Release; die im Manifest enthaltene Version **0.6.1** kennzeichnet
+den Fork-Stand mit modusunabhängigem Slider und angepasster Smart-Mode-Logik.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 ## Übernommene Projektbeschreibung
