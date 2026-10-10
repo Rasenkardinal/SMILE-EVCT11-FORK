@@ -48,6 +48,7 @@ class AlphaESSWallboxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._cancel_followup_refresh: Callable[[], None] | None = None
         self._stopped = False
         self.api.set_settings_written_callback(self._schedule_followup_refresh)
+        self.api.write_status.callback = self.async_update_listeners
 
     def _schedule_followup_refresh(self) -> None:
         """Read back accepted settings after portal propagation, without waiting.
@@ -73,14 +74,17 @@ class AlphaESSWallboxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Prevent scheduled API traffic after the config entry is unloaded."""
         self._stopped = True
         self.api.set_settings_written_callback(None)
+        self.api.write_status.callback = None
         if self._cancel_followup_refresh is not None:
             self._cancel_followup_refresh()
             self._cancel_followup_refresh = None
 
     async def _async_update_data(self) -> dict[str, Any]:
+        readback_id = self.api.write_status.readback_id
         try:
             return await self.api.async_get_wallbox_data()
         except (AuthenticationError, PortalConnectionError) as err:
+            self.api.write_status.read_failed(readback_id, str(err))
             _LOGGER.warning(
                 "AlphaESS wallbox refresh failed during %s with status %s",
                 err.step,

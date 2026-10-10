@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.6.3 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -57,10 +57,53 @@ wurde durch diesen Fork nicht implementiert.
   Mit den Smart-Mode-, Ladestrom- und Phasenwahl-Änderungen bestehen insgesamt **39 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.6.3** wird als GitHub-Release **`v0.6.3`** für HACS
-bereitgestellt. Die im Manifest enthaltene Version **0.6.3** kennzeichnet
-den Fork-Stand mit modusunabhängigem Slider und angepasster Smart-Mode-Logik.
+Die Fork-Version **0.7.0** wird als GitHub-Release **`v0.7.0`** für HACS
+bereitgestellt. Die im Manifest enthaltene Version **0.7.0** kennzeichnet
+den Fork-Stand mit Schreibstatus-Sensor, modusunabhängigem Slider und angepasster Smart-Mode-Logik.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
+
+### Letzte Einstellungsänderung (ab 0.7.0)
+
+Der zusätzliche Diagnose-Sensor **Letzte Einstellungsänderung** zeigt den
+letzten lokalen Auftrag für Einstellungen oder Zeitfenster. Er wird bereits
+beim Senden aktualisiert, unabhängig vom normalen Polling.
+Die neue Funktion ist durch Regressionstests abgesichert; insgesamt bestehen
+**55 automatisierte Tests**. Ein Test in einer laufenden Home-Assistant-Instanz
+mit realer Wallbox steht noch aus.
+
+| Zustand | Bedeutung |
+|---|---|
+| Noch keine Änderung | Seit dem Laden der Integration kein Auftrag gestartet. |
+| Wird gesendet | Konfiguration wird gelesen oder der Schreibvorgang läuft. |
+| API angenommen – Bestätigung ausstehend | HTTP 200/201/204 erhalten; Werte noch nicht zurückgelesen. |
+| Im Portal bestätigt | Alle angeforderten Werte entsprechen der gelesenen Portal-Konfiguration. |
+| Noch nicht im Portal bestätigt | Erfolgreiche Rücklesung, aber nicht alle Werte stimmen überein. |
+| Abgelehnt | Schreibvorgang ausdrücklich abgelehnt, etwa mit HTTP 400/401/403. |
+| Nicht übermittelt | Lokale Validierung, Anmeldung oder vorbereitende Abfrage fehlgeschlagen; kein PATCH gesendet. |
+| Übermittlung unklar | Schreibvorgang ohne sichere Bestätigung, etwa Timeout, Abbruch oder HTTP 5xx. |
+
+Attribute enthalten die angeforderten Portal-Felder (einschließlich automatisch
+gesetzter OBC-Sollwahl), Zeitpunkte für Senden/API-Annahme/Portal-Bestätigung,
+HTTP-Status und gegebenenfalls einen Fehler oder Rücklesefehler.
+Zeitpunkte enthalten eine UTC-Zeitzonenangabe. Zeitfenster werden in den
+Feldpfaden mit API-Indizes **0/1/2** für Zeitrahmen **1/2/3** bezeichnet.
+Bereits passende Werte werden ohne PATCH als im Portal bestätigt angezeigt,
+mit einem entsprechenden Hinweis und ohne behauptete HTTP-Annahme.
+
+Die vorhandene Rücklesung nach drei Sekunden und das normale Polling prüfen
+nur die angeforderten Felder. Fehlende oder abweichende Werte bestätigen den
+Auftrag nicht. Rücklesefehler löschen eine vorherige API-Annahme nicht.
+Eine ältere Abfrage kann keinen neueren Auftrag bestätigen. Es gibt keine
+automatische Wiederholung von Schreibbefehlen und keine feste Frist, nach
+der eine fehlende Bestätigung als Ablehnung gilt.
+
+**Die Anzeige bestätigt keine physische Umsetzung an der Wallbox.** Insbesondere
+nach einem Timeout kann ein später passend gelesener Wert die Portal-Einstellung
+bestätigen, ohne nachzuweisen, welcher Client ihn geändert hat.
+START/STOP und reine App-/Portal-Änderungen werden nicht als eigene Aufträge
+erfasst. Der Sensor bleibt bei Pollingfehlern sichtbar; sein Status wird bei
+Neustart oder Neuladen der Integration zurückgesetzt. Es werden keine
+Zugangsdaten, Tokens oder vollständigen Gerätekonfigurationen im Sensor abgelegt.
 
 ## Übernommene Projektbeschreibung
 
@@ -228,7 +271,7 @@ Kurze Übergangszustände der Wallbox können zwischen zwei Abfragen liegen und 
 
 1. HACS öffnen und **Integrationen → ⋮ → Benutzerdefinierte Repositories** wählen.
 2. `https://github.com/Rasenkardinal/SMILE-EVCT11-FORK` als Repository mit Typ **Integration** hinzufügen.
-3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren, beim Herunterladen das Release **`v0.6.3`** (oder ein neueres Fork-Release) auswählen und anschließend Home Assistant neu starten.
+3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren, beim Herunterladen das Release **`v0.7.0`** (oder ein neueres Fork-Release) auswählen und anschließend Home Assistant neu starten.
 4. Eine bereits eingerichtete Integration nicht löschen. Zugangsdaten und Wallbox-Seriennummer bleiben im vorhandenen Config Entry erhalten.
 5. Auf der Geräteseite unter Diagnose prüfen, welches Portal-Profil (`g1T` oder `g2T`) erkannt wurde.
 

@@ -32,6 +32,7 @@ from .const import (
     CONF_USERNAME,
     CONF_WALLBOX_SERIAL,
 )
+from .write_status import SettingPath, SettingsWriteStatus
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -90,7 +91,24 @@ def _serialize_settings_write(method):
                 # The user requested a newer current while this call waited.
                 # Only drop a request which never began its portal transaction.
                 return
-            return await method(self, *args, **kwargs)
+            self.write_status.begin({
+                **kwargs,
+                **({"Zeitrahmen": args[0] + 1} if args else {}),
+            })
+            try:
+                return await method(self, *args, **kwargs)
+            except ValueError as err:
+                self.write_status.failed(str(err), rejected=True)
+                raise
+            except AuthenticationError as err:
+                self.write_status.failed(str(err), rejected=True)
+                raise
+            except PortalConnectionError as err:
+                self.write_status.failed(str(err), err.status)
+                raise
+            except asyncio.CancelledError:
+                self.write_status.failed("Auftrag abgebrochen; keine automatische Wiederholung")
+                raise
 
     return wrapped
 
@@ -101,6 +119,7 @@ class AlphaESSPortalApi:
     def __init__(self, hass: HomeAssistant, config: dict[str, Any]) -> None:
         self._session = async_get_clientsession(hass)
         self._settings_write_lock = asyncio.Lock()
+        self.write_status = SettingsWriteStatus()
         self._charge_current_request_id = 0
         self._settings_written_callback: Callable[[], None] | None = None
         self._username = config[CONF_USERNAME]
@@ -140,13 +159,22 @@ class AlphaESSPortalApi:
             params={"components": "basic,g1T"},
             step="system check",
         )
+        readback_id = self.write_status.readback_id
         try:
             configuration = await self._async_get(
                 f"/internal/v1/ess/{self._system_serial}",
                 step="wallbox configuration",
             )
-        except PortalConnectionError:
+        except PortalConnectionError as err:
+            self.write_status.read_failed(readback_id, str(err))
             configuration = {}
+        except AuthenticationError as err:
+            self.write_status.read_failed(readback_id, str(err))
+            raise
+        else:
+            self.write_status.check(
+                readback_id, self._find_wallbox_data(configuration, self._wallbox_serial)
+            )
 
         wallbox_serial = (
             self._wallbox_serial
@@ -406,12 +434,31 @@ class AlphaESSPortalApi:
                 raise ValueError("Diese Wallbox unterstützt keine Kabel-Selbstverriegelung")
             settings["gunLineSelfLockEnable"] = bool(gun_line_self_lock_enabled)
 
-        # Avoid an unnecessary remote write if the requested configuration
-        # already matches the freshly fetched portal document.
-        if payload == configuration:
-            return
-        await self._async_authenticated_patch(
-            f"/internal/v1/ess/{self._system_serial}", payload, step="wallbox settings"
+        expected: dict[SettingPath, Any] = {}
+        for requested, field in (
+            (charge_mode, "chargeMode"),
+            (charge_current, "chargeCurrent"),
+            (charge_strategy, "chargeStrategy"),
+            (obc_phase, "obcPhase"),
+            (smart_mode, "smartMode"),
+            (gun_line_self_lock_enabled, "gunLineSelfLockEnable"),
+        ):
+            if requested is not None and generation is not None:
+                expected[(generation, field)] = settings[field]
+        original_wallbox = self._find_wallbox_data(configuration, self._wallbox_serial)
+        if (
+            generation is not None
+            and settings.get("obcPhase") != original_wallbox[generation].get("obcPhase")
+        ):
+            expected[(generation, "obcPhase")] = settings["obcPhase"]
+        for requested, field in (
+            (household_current, "houseHoldCurrent"),
+            (installer_control_allowed, "allowInstallersControl"),
+        ):
+            if requested is not None:
+                expected[(field,)] = wallbox[field]
+        await self._async_write_settings(
+            configuration, payload, expected, step="wallbox settings"
         )
 
     @_serialize_settings_write
@@ -458,11 +505,37 @@ class AlphaESSPortalApi:
                 raise ValueError("Der Ladestrom muss zwischen 6 und 16 A liegen")
             period["chargeCurrent"] = charge_current
 
-        if payload == configuration:
-            return
-        await self._async_authenticated_patch(
-            f"/internal/v1/ess/{self._system_serial}", payload, step="time period settings"
+        expected: dict[SettingPath, Any] = {
+            ("g2T", "timePeriods", index, field): period[field]
+            for requested, field in (
+                (enabled, "isEnable"),
+                (start_time, "startTime"),
+                (end_time, "endTime"),
+                (charge_mode, "chargeMode"),
+                (charge_current, "chargeCurrent"),
+            )
+            if requested is not None
+        }
+        await self._async_write_settings(
+            configuration, payload, expected, step="time period settings"
         )
+
+    async def _async_write_settings(
+        self,
+        configuration: dict[str, Any],
+        payload: dict[str, Any],
+        expected: dict[SettingPath, Any],
+        *,
+        step: str,
+    ) -> None:
+        self.write_status.prepare(expected)
+        if payload == configuration:
+            self.write_status.unchanged()
+            return
+        status = await self._async_authenticated_patch(
+            f"/internal/v1/ess/{self._system_serial}", payload, step=step
+        )
+        self.write_status.accepted(status)
 
     @staticmethod
     def _validate_hhmm(value: str) -> None:
@@ -637,8 +710,9 @@ class AlphaESSPortalApi:
         except (aiohttp.ClientError, asyncio.TimeoutError) as err:
             raise PortalConnectionError from err
 
-    async def _async_authenticated_patch(self, path: str, data: dict[str, Any], *, step: str) -> None:
+    async def _async_authenticated_patch(self, path: str, data: dict[str, Any], *, step: str) -> int:
         await self._async_token()
+        self.write_status.transmitting()
         try:
             async with self._session.patch(
                 f"{self._api_url}{path}",
@@ -646,6 +720,7 @@ class AlphaESSPortalApi:
                 headers={**PORTAL_HEADERS, "Authorization": self._token},
                 timeout=aiohttp.ClientTimeout(total=20),
             ) as response:
+                self.write_status.attributes["HTTP-Status"] = response.status
                 if response.status in (401, 403):
                     raise AuthenticationError(step)
                 if response.status not in (200, 201, 204):
@@ -660,8 +735,9 @@ class AlphaESSPortalApi:
                         # The PATCH succeeded; a notification failure must not
                         # falsely report a failed write to Home Assistant.
                         _LOGGER.exception("Unable to schedule AlphaESS settings read-back")
+                return response.status
         except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            raise PortalConnectionError from err
+            raise PortalConnectionError(step=step) from err
 
     async def _async_get(
         self,

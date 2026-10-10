@@ -1,5 +1,21 @@
 # Changelog
 
+## Fork 0.7.0 – 2026-10-10
+
+- Diagnose-Sensor „Letzte Einstellungsänderung“ für lokale Einstellungs- und
+  Zeitfenster-Schreibvorgänge ergänzt. API-Annahme und passende Portal-Rücklesung
+  werden getrennt angezeigt, ohne eine physische Umsetzung zu behaupten.
+- Angeforderte Felder, automatische OBC-Anpassungen, Zeitpunkte, HTTP-Status,
+  Fehler und Rücklesefehler als Attribute. Keine Speicherung von Zugangsdaten
+  oder vollständigen Portal-Dokumenten.
+- Abgelehnte, nicht gesendete und unklare Übermittlungen unterscheiden.
+  No-op-Aufträge ohne erfundene API-Annahme bestätigen. Ältere Rücklesungen
+  dürfen keinen neueren Auftrag bestätigen; keine automatischen Schreib-Retries.
+- Sensor auch bei Pollingfehlern sichtbar; Status nur im Arbeitsspeicher,
+  Callback beim Entladen entfernen.
+- Insgesamt 55 automatisierte Tests bestanden, einschließlich echter
+  Produktionsmethoden für HTTP-Ergebnisse, Rücklesung, Sensor und Abbruch.
+
 ## Fork 0.6.3 – 2026-10-10
 
 - Beim G2T-Moduswechsel von 4 auf 1–3 mit eingeschaltetem Smart Mode die

@@ -45,6 +45,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             AlphaESSWallboxStatusSensor(coordinator, entry),
+            AlphaESSSettingsWriteStatusSensor(coordinator, entry),
             AlphaESSWallboxPowerSensor(coordinator, entry),
             AlphaESSYesNoSensor(coordinator, entry, "Fahrzeug angeschlossen", "vehicle_connected"),
             AlphaESSYesNoSensor(coordinator, entry, "Ladestecker verriegelt", "gun_locked"),
@@ -64,6 +65,36 @@ async def async_setup_entry(
             AlphaESSWallboxInformationSensor(coordinator, entry, "Hardware", "hardwareVersion"),
         ]
     )
+
+
+class AlphaESSSettingsWriteStatusSensor(AlphaESSWallboxEntity, SensorEntity):
+    """Report the latest local settings write, not physical wallbox execution."""
+
+    _attr_name = "Letzte Einstellungsänderung"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: AlphaESSWallboxCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "last_settings_write")
+
+    @property
+    def available(self) -> bool:
+        """Keep failure diagnostics visible when wallbox polling fails."""
+        return True
+
+    @property
+    def native_value(self) -> str:
+        return self.coordinator.api.write_status.state
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            **self.coordinator.api.write_status.attributes,
+            "Hinweis": (
+                "Bestätigung der Portal-Einstellungen, nicht der physischen "
+                "Umsetzung. Nur lokale Einstellungsänderungen; kein START/STOP. "
+                "Status wird beim Neustart zurückgesetzt."
+            ),
+        }
 
 
 class AlphaESSWallboxStatusSensor(AlphaESSWallboxEntity, SensorEntity):

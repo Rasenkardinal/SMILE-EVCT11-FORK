@@ -9,6 +9,7 @@ import ast
 import asyncio
 from pathlib import Path
 import typing
+from types import SimpleNamespace
 import unittest
 
 
@@ -86,6 +87,7 @@ Methods = load_coordinator_methods()
 class FakeApi:
     def __init__(self):
         self.callback = "registered"
+        self.write_status = SimpleNamespace(callback="registered")
 
     def set_settings_written_callback(self, callback):
         self.callback = callback
@@ -127,6 +129,7 @@ class FollowupReadbackTests(unittest.IsolatedAsyncioTestCase):
         coordinator.stop_followup_refresh()
         self.assertTrue(scheduled_calls[-1].cancelled)
         self.assertIsNone(coordinator.api.callback)
+        self.assertIsNone(coordinator.api.write_status.callback)
         await scheduled_calls[-1].run()
         self.assertEqual(coordinator.refresh_count, 0)
 

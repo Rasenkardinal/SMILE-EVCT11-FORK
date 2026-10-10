@@ -14,6 +14,7 @@ import copy
 import functools
 from pathlib import Path
 import re
+import runpy
 import typing
 import unittest
 
@@ -24,6 +25,13 @@ API_FILE = (
     / "alphaess_portal_bridge"
     / "api.py"
 )
+SettingsWriteStatus = runpy.run_path(
+    str(API_FILE.with_name("write_status.py"))
+)["SettingsWriteStatus"]
+
+
+class AuthenticationError(Exception):
+    pass
 
 
 class PortalConnectionError(Exception):
@@ -51,6 +59,9 @@ def load_production_methods():
         "_settings_from_wallbox",
         "_find_wallbox_data",
         "_validate_hhmm",
+        "_async_write_settings",
+        "async_get_wallbox_data",
+        "_find_wallbox_serial",
     }
     methods = [
         node for node in original_class.body
@@ -69,11 +80,14 @@ def load_production_methods():
         ast.Module(body=[decorator, extracted_class], type_ignores=[])
     )
     namespace = {
+        "asyncio": asyncio,
         "wraps": functools.wraps,
         "copy": copy,
         "re": re,
         "Any": typing.Any,
         "PortalConnectionError": PortalConnectionError,
+        "AuthenticationError": AuthenticationError,
+        "SettingPath": tuple[str | int, ...],
     }
     exec(compile(module, str(API_FILE), "exec"), namespace)
     cls = namespace["ExtractedPortalMethods"]
@@ -116,6 +130,7 @@ def sample_configuration():
 class FakePortal(ProductionMethods):
     def __init__(self):
         self._settings_write_lock = asyncio.Lock()
+        self.write_status = SettingsWriteStatus()
         self._charge_current_request_id = 0
         self._wallbox_serial = "ALP_TEST"
         self._system_serial = "ALA_TEST"
@@ -131,6 +146,7 @@ class FakePortal(ProductionMethods):
         return copy.deepcopy(self.configuration)
 
     async def _async_authenticated_patch(self, path, payload, *, step):
+        self.write_status.transmitting()
         self.active_patches += 1
         self.max_active_patches = max(self.max_active_patches, self.active_patches)
         try:
@@ -144,6 +160,7 @@ class FakePortal(ProductionMethods):
             self.configuration = copy.deepcopy(payload)
             self.patches.append((step, copy.deepcopy(payload)))
             await asyncio.sleep(0)
+            return 204
         finally:
             self.active_patches -= 1
 
@@ -315,6 +332,7 @@ class SettingsWriteTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.gather(first, second, last)
         self.assertEqual(portal.settings["chargeCurrent"], 10)
         self.assertEqual(len(portal.patches), 1)
+        self.assertEqual(portal.write_status.attributes["Auftrag"], 1)
 
     async def test_other_settings_are_not_coalesced(self):
         portal = FakePortal()
