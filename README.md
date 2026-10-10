@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.6.2 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.6.3 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -54,11 +54,11 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den Smart-Mode-, Ladestrom- und Phasenwahl-Änderungen bestehen insgesamt **35 automatisierte Tests**;
+  Mit den Smart-Mode-, Ladestrom- und Phasenwahl-Änderungen bestehen insgesamt **39 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.6.2** wird als GitHub-Release **`v0.6.2`** für HACS
-bereitgestellt. Die im Manifest enthaltene Version **0.6.2** kennzeichnet
+Die Fork-Version **0.6.3** wird als GitHub-Release **`v0.6.3`** für HACS
+bereitgestellt. Die im Manifest enthaltene Version **0.6.3** kennzeichnet
 den Fork-Stand mit modusunabhängigem Slider und angepasster Smart-Mode-Logik.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
@@ -197,9 +197,12 @@ Vor einem manuellen Wechsel auf 1- oder 2-phasig muss Smart Mode in Lademodi
 Smart Mode zulässig; das Flag und der Lademodus bleiben dabei unverändert.
 Die Ausnahme bestätigt keine physische Umsetzung durch die Wallbox.
 
-Beim Rückwechsel von Modus 4 zu Modus 1–3 werden Phasenwahl und Smart Mode
-nicht automatisch angepasst. Für Smart-Mode-Betrieb dort wieder die
-3-phasige OBC-Sollwahl einstellen.
+Beim Rückwechsel von Modus 4 zu Modus 1–3 mit eingeschaltetem Smart Mode
+setzt die Integration die OBC-Sollwahl automatisch auf 3-phasig.
+Modus und Phasenwahl werden gemeinsam in einem Portal-Schreibvorgang gesendet;
+das Smart-Mode-Flag bleibt erhalten. Bei ausgeschaltetem Smart Mode oder
+gleichzeitigem Ausschalten bleibt die bisherige Phasenwahl unverändert.
+Die Rücklesung bestätigt nur die Portal-Konfiguration, keine physische Umschaltung.
 
 ## Bekannte Einschränkungen und offene Prüfungen
 
@@ -225,7 +228,7 @@ Kurze Übergangszustände der Wallbox können zwischen zwei Abfragen liegen und 
 
 1. HACS öffnen und **Integrationen → ⋮ → Benutzerdefinierte Repositories** wählen.
 2. `https://github.com/Rasenkardinal/SMILE-EVCT11-FORK` als Repository mit Typ **Integration** hinzufügen.
-3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren, beim Herunterladen das Release **`v0.6.2`** (oder ein neueres Fork-Release) auswählen und anschließend Home Assistant neu starten.
+3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren, beim Herunterladen das Release **`v0.6.3`** (oder ein neueres Fork-Release) auswählen und anschließend Home Assistant neu starten.
 4. Eine bereits eingerichtete Integration nicht löschen. Zugangsdaten und Wallbox-Seriennummer bleiben im vorhandenen Config Entry erhalten.
 5. Auf der Geräteseite unter Diagnose prüfen, welches Portal-Profil (`g1T` oder `g2T`) erkannt wurde.
 

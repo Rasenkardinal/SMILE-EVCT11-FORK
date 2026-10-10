@@ -334,6 +334,14 @@ class AlphaESSPortalApi:
             allowed_modes = {1, 2, 3, 4} if generation == "g2T" else {0, 1, 2, 3, 4}
             if charge_mode not in allowed_modes:
                 raise ValueError("Nicht unterstützter Lademodus")
+            if (
+                generation == "g2T"
+                and settings.get("chargeMode") == 4
+                and charge_mode in {1, 2, 3}
+                and settings.get("smartMode") is True
+                and smart_mode is not False
+            ):
+                settings["obcPhase"] = 3
             settings["chargeMode"] = charge_mode
 
         if charge_current is not None:

@@ -1,5 +1,16 @@
 # Changelog
 
+## Fork 0.6.3 – 2026-10-10
+
+- Beim G2T-Moduswechsel von 4 auf 1–3 mit eingeschaltetem Smart Mode die
+  OBC-Sollwahl automatisch auf 3 setzen, gemeinsam mit dem Modus in einem PATCH.
+  Smart-Mode-Flag und übrige Einstellungen bleiben erhalten.
+- Bei ausgeschaltetem oder gleichzeitig ausgeschaltetem Smart Mode keine
+  automatische Änderung der Phasenwahl.
+- Regressionstests für alle Zielmodi und Ausgangsphasen sowie widersprüchliche
+  explizite Phasenangaben ergänzt.
+- Insgesamt 39 automatisierte Tests bestanden.
+
 ## Fork 0.6.2 – 2026-10-10
 
 - OBC-Phasenwahl in Lademodus 4 auch bei gespeichertem Smart Mode freigegeben.

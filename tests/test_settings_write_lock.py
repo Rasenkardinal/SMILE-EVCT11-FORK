@@ -157,6 +157,43 @@ class FakePortal(ProductionMethods):
 
 
 class SettingsWriteTests(unittest.IsolatedAsyncioTestCase):
+    async def test_leaving_custom_mode_with_smart_mode_sets_three_phases(self):
+        for mode in (1, 2, 3):
+            for phase in (1, 2, 3):
+                with self.subTest(mode=mode, phase=phase):
+                    portal = FakePortal()
+                    portal.settings.update(chargeMode=4, smartMode=True, obcPhase=phase)
+                    expected = copy.deepcopy(portal.configuration)
+                    expected["evCharger"][0]["g2T"].update(chargeMode=mode, obcPhase=3)
+                    await portal.async_update_wallbox_settings(charge_mode=mode)
+                    self.assertEqual(portal.configuration, expected)
+                    self.assertEqual(len(portal.patches), 1)
+                    self.assertEqual(portal.patches[0][1], expected)
+
+    async def test_mode_changes_without_smart_mode_preserve_phase(self):
+        for mode in (1, 2, 3):
+            portal = FakePortal()
+            portal.settings.update(chargeMode=4, smartMode=False, obcPhase=1)
+            await portal.async_update_wallbox_settings(charge_mode=mode)
+            self.assertEqual(portal.settings["obcPhase"], 1)
+            self.assertFalse(portal.settings["smartMode"])
+
+    async def test_disabling_smart_mode_with_mode_change_preserves_phase(self):
+        portal = FakePortal()
+        portal.settings.update(chargeMode=4, smartMode=True, obcPhase=2)
+        await portal.async_update_wallbox_settings(charge_mode=1, smart_mode=False)
+        self.assertEqual(portal.settings["obcPhase"], 2)
+        self.assertFalse(portal.settings["smartMode"])
+
+    async def test_conflicting_explicit_phase_is_rejected_without_write(self):
+        portal = FakePortal()
+        portal.settings.update(chargeMode=4, smartMode=True, obcPhase=1)
+        original = copy.deepcopy(portal.configuration)
+        with self.assertRaises(ValueError):
+            await portal.async_update_wallbox_settings(charge_mode=1, obc_phase=2)
+        self.assertEqual(portal.configuration, original)
+        self.assertEqual(portal.patches, [])
+
     async def test_mode_changes_preserve_enabled_smart_mode(self):
         portal = FakePortal()
         portal.settings.update(chargeMode=1, smartMode=True, obcPhase=3)
