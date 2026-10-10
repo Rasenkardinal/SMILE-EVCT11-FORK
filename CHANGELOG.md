@@ -1,9 +1,17 @@
 # Changelog
 
-## Noch nicht veröffentlicht – Testerfeedback
+## Fork – 2026-10-10 (auf main, noch kein eigenes Release)
 
 - Kundenspezifischen Ladestrom standardmäßig als Slider von 6 bis 16 A
   in 1-A-Schritten darstellen. Die übrigen Zahlenfelder bleiben unverändert.
+- Entitätskennungen, API-Steuerung und Schutzprüfungen bleiben unverändert.
+- Regressionstest für den Slider, seine Grenzen und Schrittweite sowie die
+  unveränderten Zahlenfelder ergänzt; insgesamt 27 Tests bestanden.
+- Zweck, Herkunft und Grenzen des persönlichen Forks in der README erläutert.
+  HACS-Installation, Wechsel vom Original und Updates über main dokumentiert.
+
+## Übernommener Stand – Noch nicht veröffentlicht – Testerfeedback
+
 - Anzeige der gewählten Ladeeinstellung und der laut Portal-Modus ausgewählten
   Zeitfenster klargestellt. Gespeicherte Zeiträume bleiben unangetastet.
 - Der benutzerdefinierte Ladestrom wird ausdrücklich als Portal-Sollwert

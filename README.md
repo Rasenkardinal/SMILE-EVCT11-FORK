@@ -1,4 +1,47 @@
-# AlphaESS Wallbox Bridge
+# AlphaESS Wallbox Bridge – persönlicher Fork
+
+## Zweck dieses Forks
+
+[Rasenkardinal/SMILE-EVCT11-FORK](https://github.com/Rasenkardinal/SMILE-EVCT11-FORK)
+ist ein persönlicher Fork von
+[wfa001/SMILE-EVCT11](https://github.com/wfa001/SMILE-EVCT11).
+Er dient dazu, die Integration an die eigene Wallbox-Nutzung und Bedienung
+anzupassen, ohne das Originalprojekt zu verändern.
+
+Der Fork ersetzt die ursprüngliche Integration. Die Integrations-Domain
+`alphaess_portal_bridge`, die eindeutigen Entitätskennungen und die
+Konfigurationsstruktur bleiben erhalten. Original und Fork sind deshalb
+**nicht parallel installierbar** und sollten nicht gleichzeitig als installierte
+Quellen in HACS verwaltet werden.
+
+Der Betreiber nutzt die Integration nach eigener Rückmeldung erfolgreich mit
+seiner G3-Wallbox. Die Modellbezeichnung G3 ist dabei von den im Code erkannten
+Portal-Profilen `g1T` und `g2T` zu unterscheiden; ein zusätzliches Profil `g3T`
+wurde durch diesen Fork nicht implementiert.
+
+### Eigene Änderungen gegenüber dem Original
+
+- **10.10.2026 – Ladestrom als Slider:** Die Entität
+  `number.alphaess_wallbox_ladestrom_kundenspezifisch` verwendet standardmäßig
+  einen Slider von **6 bis 16 A in 1-A-Schritten** statt eines Zahlenfelds.
+  Die tatsächliche Entitäts-ID kann je nach Home-Assistant-Einrichtung abweichen.
+- Hausstrom-Einstellung und Zeitfenster-Ströme bleiben Zahlenfelder.
+  API-Aufrufe, Schutzprüfungen und die Voraussetzung
+  **Kundenspezifische Ladeleistung** für die Ladestromeingabe bleiben unverändert.
+- Individuelle Dashboard-Karten können die Darstellung selbst bestimmen.
+  Der Slider ändert nur den Standard-Eingabemodus der Entität, nicht die
+  Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
+- Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
+  sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
+  Nach dieser Änderung bestanden **27 automatisierte Tests**;
+  eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
+
+Die Fork-Änderungen stehen derzeit auf **`main`**. Es gibt noch kein eigenes
+Fork-Release; die im Manifest enthaltene Version **0.5.7** stammt vom
+Originalprojekt und kennzeichnet nicht die zusätzlichen Fork-Änderungen.
+Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
+
+## Übernommene Projektbeschreibung
 
 > **Beta 0.5.7**  
 > Entwickelt u.a. für die Community von **https://www.storion4you.de/**  
@@ -144,10 +187,27 @@ Kurze Übergangszustände der Wallbox können zwischen zwei Abfragen liegen und 
 ## Installation über HACS
 
 1. HACS öffnen und **Integrationen → ⋮ → Benutzerdefinierte Repositories** wählen.
-2. `https://github.com/wfa001/SMILE-EVCT11` als Repository mit Typ **Integration** hinzufügen.
-3. Die **AlphaESS Wallbox Bridge** installieren und Home Assistant neu starten.
+2. `https://github.com/Rasenkardinal/SMILE-EVCT11-FORK` als Repository mit Typ **Integration** hinzufügen.
+3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren. Solange kein eigenes Release existiert, beim Herunterladen den Stand **`main`** auswählen und anschließend Home Assistant neu starten.
 4. Eine bereits eingerichtete Integration nicht löschen. Zugangsdaten und Wallbox-Seriennummer bleiben im vorhandenen Config Entry erhalten.
 5. Auf der Geräteseite unter Diagnose prüfen, welches Portal-Profil (`g1T` oder `g2T`) erkannt wurde.
+
+### Wechsel vom Original zum Fork
+
+1. Zuerst ein Home-Assistant-Backup erstellen.
+2. Die ursprüngliche Repository-Installation **nur in HACS** entfernen.
+   HACS kann dabei die Integrationsdateien löschen.
+3. **Noch nicht neu starten:** Den Fork wie oben beschrieben hinzufügen und
+   herunterladen, sodass die Integrationsdateien wieder vorhanden sind.
+4. Erst danach Home Assistant neu starten.
+5. Bestehende Entitäten und Automatisierungen sowie den Ladestrom-Slider prüfen.
+
+Die eingerichtete Integration unter **Einstellungen → Geräte & Dienste**
+**nicht löschen**. Sie enthält die bestehende Einrichtung und soll vom Fork
+weiterverwendet werden. Künftige Updates nur über das Fork-Repository beziehen,
+damit Updates des Originals die eigenen Änderungen nicht überschreiben.
+Für neue Änderungen auf `main` bei Bedarf in HACS **Erneut herunterladen**
+verwenden und anschließend Home Assistant neu starten.
 
 ## Manuelle Installation
 
@@ -173,6 +233,11 @@ Bei einer Neuinstallation die Integration über **Einstellungen → Geräte & Di
 | `gunLineSelfLockEnable` | Kabel-Selbstverriegelung |
 
 ## Projekt-Herkunft und Attribution
+
+Dieser Fork baut auf dem Originalprojekt von **wfa001** auf. Die nachfolgend
+beschriebene G2T-Unterstützung stammt aus dem übernommenen Projekt und ist keine
+Neuentwicklung dieses Forks. Die ursprünglichen Beiträge und die
+[MIT-Lizenz](LICENSE) bleiben erhalten.
 
 Die Unterstützung der **AlphaESS SMILE-G3-EVCT11/S (G2T)** wurde durch **Kavino** aus der Storion4you-Community initiiert, anhand realer Portal- und Wallbox-Daten ermittelt und praktisch getestet. Dazu gehören insbesondere die G2T-Zuordnungen und die Home-Assistant-Unterstützung für Ladestrategie, Lademodus, Ladestrom, OBC-Phasenwahl, Smart Mode, Zeitfenster, Live-Status und Energiebericht.
 
