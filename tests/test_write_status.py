@@ -395,6 +395,63 @@ class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
             status.check(status.readback_id, wallbox)
             self.assertEqual(status.state, "Noch nicht im Portal bestätigt")
 
+    async def test_numeric_readback_accepts_equal_integer_and_float_values(self):
+        for actual in (10, 10.0):
+            with self.subTest(actual=actual):
+                status = SettingsWriteStatus()
+                status.begin({"charge_current": 10})
+                status.prepare({("g2T", "chargeCurrent"): 10})
+                status.accepted(204)
+                status.check(status.readback_id, {"g2T": {"chargeCurrent": actual}})
+                self.assertEqual(status.state, "Im Portal bestätigt")
+                self.assertEqual(status.attributes["Abweichende Felder"], [])
+                self.assertEqual(status.attributes["Rückgelesen"]["g2T.chargeCurrent"], {
+                    "Wert": actual, "Datentyp": type(actual).__name__, "Vorhanden": True,
+                })
+
+    async def test_invalid_numeric_readback_does_not_confirm(self):
+        for actual in (True, False, "10", "10.0", None, 9, 10.01, float("nan"), float("inf")):
+            with self.subTest(actual=actual):
+                status = SettingsWriteStatus()
+                status.begin({"charge_current": 10})
+                status.prepare({("g2T", "chargeCurrent"): 10})
+                status.accepted(204)
+                status.check(status.readback_id, {"g2T": {"chargeCurrent": actual}})
+                self.assertEqual(status.state, "Noch nicht im Portal bestätigt")
+                self.assertEqual(status.attributes["Abweichende Felder"], ["g2T.chargeCurrent"])
+
+    async def test_readback_diagnostics_distinguish_missing_and_null_without_leaking_data(self):
+        status = SettingsWriteStatus()
+        status.begin({"charge_current": 10})
+        status.prepare({("g2T", "chargeCurrent"): 10, ("g2T", "chargeMode"): 4})
+        status.accepted(204)
+        for actual, present, name in (
+            ({}, False, "fehlend"),
+            ({"chargeCurrent": None}, True, "NoneType"),
+            ({"chargeCurrent": {"token": "SECRET"}}, True, "dict"),
+        ):
+            status.check(status.readback_id, {"g2T": actual})
+            read = status.attributes["Rückgelesen"]["g2T.chargeCurrent"]
+            self.assertEqual(read, {"Wert": None, "Datentyp": name, "Vorhanden": present})
+            self.assertNotIn("SECRET", str(status.attributes))
+        status.check(status.readback_id, {"g2T": {"chargeCurrent": 10.0, "chargeMode": 1}})
+        self.assertEqual(status.attributes["Abweichende Felder"], ["g2T.chargeMode"])
+        status.check(status.readback_id, {"g2T": {"chargeCurrent": 10.0, "chargeMode": 4.0}})
+        self.assertEqual(status.state, "Im Portal bestätigt")
+        self.assertEqual(status.attributes["Abweichende Felder"], [])
+        status.begin({"charge_current": 12})
+        self.assertNotIn("Rückgelesen", status.attributes)
+        self.assertNotIn("Abweichende Felder", status.attributes)
+
+    async def test_decimal_mode_confirmation_retires_bridge(self):
+        status = SettingsWriteStatus()
+        status.begin({"charge_mode": 4})
+        status.prepare({("g2T", "chargeMode"): 4})
+        status.accepted(204)
+        selection = status.accepted_mode
+        status.check_mode(selection, {"g2T": {"chargeMode": 4.0}})
+        self.assertIsNone(status.accepted_mode)
+
     async def test_http_rejection_and_timeout_are_distinct(self):
         status = SettingsWriteStatus()
         for code, expected in ((400, "Abgelehnt"), (403, "Abgelehnt"), (None, "Übermittlung unklar")):

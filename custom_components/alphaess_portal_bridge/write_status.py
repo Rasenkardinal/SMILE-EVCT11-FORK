@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import logging
+import math
 import time
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -10,6 +11,12 @@ from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 SettingPath = tuple[str | int, ...]
+
+
+def _values_match(actual: Any, expected: Any) -> bool:
+    if type(actual) in (int, float) and type(expected) in (int, float):
+        return math.isfinite(actual) and math.isfinite(expected) and actual == expected
+    return type(actual) is type(expected) and actual == expected
 
 
 class SettingsWriteStatus:
@@ -55,8 +62,7 @@ class SettingsWriteStatus:
             settings = wallbox.get(generation)
             if (
                 isinstance(settings, dict)
-                and type(settings.get("chargeMode")) is int
-                and settings.get("chargeMode") == selection[0]
+                and _values_match(settings.get("chargeMode"), selection[0])
             ):
                 self._accepted_mode = None
                 return
@@ -143,9 +149,11 @@ class SettingsWriteStatus:
             return
         self.attributes["Letzte Prüfung um"] = self._now()
         self.attributes.pop("Rücklesefehler", None)
-        matches = bool(wallbox)
+        readback: dict[str, Any] = {}
+        mismatched: list[str] = []
         for path, expected in self._expected.items():
             actual: Any = wallbox
+            present = True
             for part in path:
                 if isinstance(actual, dict) and isinstance(part, str) and part in actual:
                     actual = actual[part]
@@ -156,11 +164,25 @@ class SettingsWriteStatus:
                 ):
                     actual = actual[part]
                 else:
-                    matches = False
+                    present = False
                     break
-            if type(actual) is not type(expected) or actual != expected:
-                matches = False
-        if matches:
+            field = ".".join(str(part) for part in path)
+            # Expose only requested scalar fields, never parent configuration.
+            scalar = present and (
+                actual is None or type(actual) in (str, int, float, bool)
+            )
+            if type(actual) is float and not math.isfinite(actual):
+                scalar = False
+            readback[field] = {
+                "Wert": actual if scalar else None,
+                "Datentyp": type(actual).__name__ if present else "fehlend",
+                "Vorhanden": present,
+            }
+            if not present or not _values_match(actual, expected):
+                mismatched.append(field)
+        self.attributes["Rückgelesen"] = readback
+        self.attributes["Abweichende Felder"] = mismatched
+        if wallbox and not mismatched:
             self.state = "Im Portal bestätigt"
             self.attributes["Portal bestätigt um"] = self._now()
         elif self.state != "Übermittlung unklar":

@@ -1,5 +1,18 @@
 # Changelog
 
+## Fork 0.7.3 – 2026-10-10
+
+- Portal-Rücklesung akzeptiert numerisch gleiche Ganz- und Dezimalzahlen,
+  ohne boolesche Werte oder Zahlen als Text gleichzusetzen.
+- Diagnoseattribute „Rückgelesen“ und „Abweichende Felder“ zeigen angeforderte
+  Einzelwerte, Datentypen und fehlende Felder, ohne vollständige
+  Gerätekonfigurationen zu veröffentlichen.
+- Derselbe Zahlenvergleich beendet die vorläufige Modusfreigabe bei
+  passender Portal-Rückmeldung. Regressionstests für Zahlen, Typabweichungen,
+  fehlende Felder und Diagnosebereinigung ergänzt.
+- Insgesamt 70 automatisierte Tests bestanden. Ob die Typabweichung bei der
+  realen G3 die fehlende Bestätigung verursacht, ist noch zu prüfen.
+
 ## Fork 0.7.2 – 2026-10-10
 
 - Ladestrom-Slider sofort nach erfolgreicher API-Annahme von Modus 4 freigeben,

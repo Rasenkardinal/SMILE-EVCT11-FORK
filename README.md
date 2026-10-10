@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.2 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.3 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -54,13 +54,13 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den bisherigen Änderungen bestehen insgesamt **66 automatisierte Tests**;
+  Mit den bisherigen Änderungen bestehen insgesamt **70 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.7.2** wird als GitHub-Release **`v0.7.2`** für HACS
-bereitgestellt. Die im Manifest enthaltene Version **0.7.2** kennzeichnet
-den veröffentlichten Fork-Stand mit sofortiger Slider-Freigabe, Statussymbolen
-und angepasster Smart-Mode-Logik.
+Die Fork-Version **0.7.3** wird als GitHub-Release **`v0.7.3`** für HACS
+bereitgestellt. Die im Manifest enthaltene Version **0.7.3** kennzeichnet
+den veröffentlichten Fork-Stand mit korrigierter numerischer Rückleseprüfung,
+Diagnoseattributen, sofortiger Slider-Freigabe und Statussymbolen.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Ab v0.7.1:** Die Ladestrom-Eingabe wurde gegenüber v0.7.0
@@ -95,7 +95,7 @@ Der zusätzliche Diagnose-Sensor **Letzte Einstellungsänderung** zeigt den
 letzten lokalen Auftrag für Einstellungen oder Zeitfenster. Er wird bereits
 beim Senden aktualisiert, unabhängig vom normalen Polling.
 Die neue Funktion ist durch Regressionstests abgesichert; insgesamt bestehen
-**66 automatisierte Tests**. Ein Test in einer laufenden Home-Assistant-Instanz
+**70 automatisierte Tests**. Ein Test in einer laufenden Home-Assistant-Instanz
 mit realer Wallbox steht noch aus.
 
 | Zustand | Bedeutung |
@@ -112,6 +112,15 @@ mit realer Wallbox steht noch aus.
 Attribute enthalten die angeforderten Portal-Felder (einschließlich automatisch
 gesetzter OBC-Sollwahl), Zeitpunkte für Senden/API-Annahme/Portal-Bestätigung,
 HTTP-Status und gegebenenfalls einen Fehler oder Rücklesefehler.
+**Ab v0.7.3:** Numerisch gleiche Ganz- und Dezimalzahlen
+(z. B. `10` und `10.0`) bestätigen denselben Sollwert. Boolesche Werte
+und Zahlen als Text werden nicht in Zahlen umgewandelt; es gibt keine
+Rundungstoleranz. Nicht endliche Zahlen bestätigen keinen Sollwert.
+`Rückgelesen` zeigt für jedes angeforderte Feld den Wert, Datentyp und
+ob es vorhanden war. `Abweichende Felder` nennt die noch nicht passenden
+Feldpfade. Zusammen mit `Angefordert` lassen sich Wert- und Typabweichungen
+unterscheiden. Fehlende Felder, null und unerwartete Objektwerte werden
+unterschieden, ohne ganze Objekte oder Gerätekonfigurationen offenzulegen.
 Zeitpunkte enthalten eine UTC-Zeitzonenangabe. Zeitfenster werden in den
 Feldpfaden mit API-Indizes **0/1/2** für Zeitrahmen **1/2/3** bezeichnet.
 Bereits passende Werte werden ohne PATCH als im Portal bestätigt angezeigt,
