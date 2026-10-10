@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 from datetime import timedelta
 from typing import Any
@@ -47,8 +48,33 @@ class AlphaESSWallboxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.api = api
         self._cancel_followup_refresh: Callable[[], None] | None = None
         self._stopped = False
+        self._cancel_mode_expiry: Callable[[], None] | None = None
+        self._mode_selection: tuple[int, float] | None = None
         self.api.set_settings_written_callback(self._schedule_followup_refresh)
-        self.api.write_status.callback = self.async_update_listeners
+        self.api.write_status.callback = self._write_status_changed
+
+    def _write_status_changed(self) -> None:
+        if self._stopped:
+            return
+        selection = self.api.write_status.accepted_mode
+        if selection != self._mode_selection:
+            if self._cancel_mode_expiry is not None:
+                self._cancel_mode_expiry()
+                self._cancel_mode_expiry = None
+            self._mode_selection = selection
+            if selection is not None:
+                self._cancel_mode_expiry = async_call_later(
+                    self.hass, max(0, selection[1] - time.monotonic()),
+                    self._mode_expired,
+                )
+        self.async_update_listeners()
+
+    def _mode_expired(self, _now: Any) -> None:
+        self.api.write_status.expire_mode(self._mode_selection)
+        self._cancel_mode_expiry = None
+        self._mode_selection = None
+        if not self._stopped:
+            self.async_update_listeners()
 
     def _schedule_followup_refresh(self) -> None:
         """Read back accepted settings after portal propagation, without waiting.
@@ -75,14 +101,27 @@ class AlphaESSWallboxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._stopped = True
         self.api.set_settings_written_callback(None)
         self.api.write_status.callback = None
+        if self._cancel_mode_expiry is not None:
+            self._cancel_mode_expiry()
+            self._cancel_mode_expiry = None
         if self._cancel_followup_refresh is not None:
             self._cancel_followup_refresh()
             self._cancel_followup_refresh = None
 
     async def _async_update_data(self) -> dict[str, Any]:
         readback_id = self.api.write_status.readback_id
+        mode_selection = self.api.write_status.accepted_mode
         try:
-            return await self.api.async_get_wallbox_data()
+            data = await self.api.async_get_wallbox_data()
+            # Retire the bridge only when this complete snapshot is about to
+            # replace coordinator.data, not during the earlier config GET.
+            self.api.write_status.check_mode(
+                mode_selection,
+                self.api._find_wallbox_data(
+                    data["configuration"], data["wallbox_serial"]
+                ),
+            )
+            return data
         except (AuthenticationError, PortalConnectionError) as err:
             self.api.write_status.read_failed(readback_id, str(err))
             _LOGGER.warning(

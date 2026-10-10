@@ -58,6 +58,8 @@ class AlphaESSWallboxChargeCurrentNumber(_CurrentNumberBase):
                 "Dies ist der vom AlphaESS-Portal gemeldete Soll-Ladestrom. "
                 "Die Eingabe ist nur bei Kundenspezifischer Ladeleistung "
                 "(Lademodus 4) verfügbar und wechselt den Lademodus nicht. "
+                "Nach API-Annahme von Modus 4 wird die Eingabe sofort für "
+                "maximal 60 Sekunden bis zur Portal-Rückmeldung freigegeben. "
                 "Eine erfolgreiche API-Antwort oder geänderte Anzeige bestätigt "
                 "noch keine physisch erfolgte Ladeleistungsänderung. "
                 "Für den tatsächlichen Ladezustand die Live-Leistung prüfen."
@@ -70,11 +72,20 @@ class AlphaESSWallboxChargeCurrentNumber(_CurrentNumberBase):
         return float(value) if isinstance(value, (int, float)) else None
 
     @property
+    def _custom_mode_selected(self) -> bool:
+        selection = self.coordinator.api.write_status.accepted_mode
+        return (
+            selection[0] == 4
+            if selection is not None
+            else self.settings.get("chargeMode") == 4
+        )
+
+    @property
     def available(self) -> bool:
-        return super().available and self.settings.get("chargeMode") == 4
+        return super().available and self._custom_mode_selected
 
     async def async_set_native_value(self, value: float) -> None:
-        if self.settings.get("chargeMode") != 4:
+        if not self._custom_mode_selected:
             raise HomeAssistantError("Wähle zuerst Kundenspezifische Ladeleistung")
         try:
             await self.coordinator.api.async_update_wallbox_settings(charge_current=int(value))

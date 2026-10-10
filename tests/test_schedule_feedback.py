@@ -73,6 +73,37 @@ def load_current_entity():
 
 
 class CurrentModeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_accepted_mode_immediately_controls_slider_and_write_guard(self):
+        cls = load_current_entity()
+        writes = []
+
+        async def update(**kwargs):
+            writes.append(kwargs)
+
+        status = SimpleNamespace(accepted_mode=(4, 60))
+        entity = cls.__new__(cls)
+        entity.settings = {"chargeMode": 1}
+        entity.coordinator = SimpleNamespace(
+            connected=True,
+            api=SimpleNamespace(write_status=status, async_update_wallbox_settings=update),
+            async_request_refresh=lambda: asyncio.sleep(0),
+        )
+        self.assertTrue(entity.available)
+        entity.coordinator.connected = False
+        self.assertFalse(entity.available)
+        entity.coordinator.connected = True
+        await entity.async_set_native_value(10)
+        self.assertEqual(writes, [{"charge_current": 10}])
+        self.assertEqual(entity.settings["chargeMode"], 1)
+        status.accepted_mode = None
+        self.assertFalse(entity.available)
+        entity.settings["chargeMode"] = 4
+        status.accepted_mode = (1, 60)
+        self.assertFalse(entity.available)
+        with self.assertRaises(RuntimeError):
+            await entity.async_set_native_value(10)
+        self.assertEqual(len(writes), 1)
+
     async def test_current_is_available_and_writable_only_in_custom_mode(self):
         cls = load_current_entity()
         for mode in (0, 1, 2, 3, 4, None):
@@ -84,7 +115,10 @@ class CurrentModeTests(unittest.IsolatedAsyncioTestCase):
 
                 coordinator = SimpleNamespace(
                     connected=True,
-                    api=SimpleNamespace(async_update_wallbox_settings=update),
+                    api=SimpleNamespace(
+                        async_update_wallbox_settings=update,
+                        write_status=SimpleNamespace(accepted_mode=None),
+                    ),
                     async_request_refresh=lambda: asyncio.sleep(0),
                 )
                 entity = cls.__new__(cls)

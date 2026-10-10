@@ -86,6 +86,19 @@ class AlphaESSSettingsWriteStatusSensor(AlphaESSWallboxEntity, SensorEntity):
         return self.coordinator.api.write_status.state
 
     @property
+    def icon(self) -> str:
+        return {
+            "Noch keine Änderung": "mdi:information-outline",
+            "Wird gesendet": "mdi:cloud-upload-outline",
+            "API angenommen – Bestätigung ausstehend": "mdi:timer-sand",
+            "Im Portal bestätigt": "mdi:check-circle-outline",
+            "Noch nicht im Portal bestätigt": "mdi:clock-alert-outline",
+            "Übermittlung unklar": "mdi:help-circle-outline",
+            "Abgelehnt": "mdi:close-circle-outline",
+            "Nicht übermittelt": "mdi:cloud-off-outline",
+        }.get(self.native_value, "mdi:help-circle-outline")
+
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         return {
             **self.coordinator.api.write_status.attributes,

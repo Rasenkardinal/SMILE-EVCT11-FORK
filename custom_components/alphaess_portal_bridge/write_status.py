@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import logging
+import time
 from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
@@ -21,6 +22,48 @@ class SettingsWriteStatus:
         self._request_id = 0
         self._expected: dict[SettingPath, Any] = {}
         self._patch_started = False
+        self._accepted_mode: tuple[int, float] | None = None
+        self._mode_requested = False
+
+    @staticmethod
+    def _monotonic() -> float:
+        return time.monotonic()
+
+    @property
+    def accepted_mode(self) -> tuple[int, float] | None:
+        """Temporary UI selection; never replace the reported portal values."""
+        if self._accepted_mode is not None and self._monotonic() < self._accepted_mode[1]:
+            return self._accepted_mode
+        return None
+
+    def _remember_mode(self) -> None:
+        if not self._mode_requested:
+            return
+        for generation in ("g1T", "g2T"):
+            mode = self._expected.get((generation, "chargeMode"))
+            if type(mode) is int:
+                self._accepted_mode = (mode, self._monotonic() + 60)
+                return
+
+    def check_mode(
+        self, selection: tuple[int, float] | None, wallbox: dict[str, Any]
+    ) -> None:
+        """A read begun before a newer selection cannot clear that selection."""
+        if selection is None or selection != self.accepted_mode:
+            return
+        for generation in ("g1T", "g2T"):
+            settings = wallbox.get(generation)
+            if (
+                isinstance(settings, dict)
+                and type(settings.get("chargeMode")) is int
+                and settings.get("chargeMode") == selection[0]
+            ):
+                self._accepted_mode = None
+                return
+
+    def expire_mode(self, selection: tuple[int, float] | None) -> None:
+        if selection == self._accepted_mode:
+            self._accepted_mode = None
 
     @staticmethod
     def _now() -> str:
@@ -34,6 +77,7 @@ class SettingsWriteStatus:
                 _LOGGER.exception("Unable to notify AlphaESS write-status listeners")
 
     def begin(self, requested: dict[str, Any]) -> None:
+        self._mode_requested = requested.get("charge_mode") is not None
         self._request_id += 1
         self._expected = {}
         self._patch_started = False
@@ -58,12 +102,14 @@ class SettingsWriteStatus:
         self._notify()
 
     def accepted(self, status: int) -> None:
+        self._remember_mode()
         self.state = "API angenommen – Bestätigung ausstehend"
         self.attributes["HTTP-Status"] = status
         self.attributes["API angenommen um"] = self._now()
         self._notify()
 
     def unchanged(self) -> None:
+        self._remember_mode()
         self.state = "Im Portal bestätigt"
         self.attributes["Portal bestätigt um"] = self._now()
         self.attributes["Hinweis zum Auftrag"] = "Werte bereits vorhanden; kein PATCH gesendet"

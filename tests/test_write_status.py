@@ -7,6 +7,7 @@ import copy
 import logging
 from types import MethodType, SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from test_settings_write_lock import (
     API_FILE,
@@ -55,6 +56,75 @@ class FakeResponse:
 
 
 class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
+    async def test_mode_acceptance_expires_exactly_after_sixty_seconds(self):
+        portal = FakePortal()
+        clock = patch.object(SettingsWriteStatus, "_monotonic", return_value=100)
+        with clock as now:
+            await portal.async_update_wallbox_settings(charge_mode=4)
+            self.assertEqual(portal.write_status.accepted_mode, (4, 160))
+            now.return_value = 159.99
+            self.assertIsNotNone(portal.write_status.accepted_mode)
+            now.return_value = 160
+            self.assertIsNone(portal.write_status.accepted_mode)
+
+    async def test_stale_mode_is_not_reintroduced_by_immediate_current_write(self):
+        portal = FakePortal()
+        portal.settings["chargeMode"] = 1
+        with patch.object(SettingsWriteStatus, "_monotonic", return_value=100) as now:
+            await portal.async_update_wallbox_settings(charge_mode=4)
+            selection = portal.write_status.accepted_mode
+            now.return_value = 120
+            portal.settings["chargeMode"] = 1  # Simulate stale portal read.
+            await portal.async_update_wallbox_settings(charge_current=10)
+            self.assertEqual(portal.settings["chargeMode"], 4)
+            self.assertEqual(portal.settings["chargeCurrent"], 10)
+            self.assertEqual(portal.write_status.accepted_mode, selection)
+            self.assertEqual(len(portal.patches), 2)
+            self.assertIn("g2T.chargeMode", portal.write_status.attributes["Angefordert"])
+            now.return_value = 160
+            self.assertIsNone(portal.write_status.accepted_mode)
+
+    async def test_matching_mode_read_retires_override_even_after_current_write(self):
+        portal = FakePortal()
+        await portal.async_update_wallbox_settings(charge_mode=4)
+        old_selection = portal.write_status.accepted_mode
+        await portal.async_update_wallbox_settings(charge_current=10)
+        portal.write_status.check_mode(old_selection, portal.wallbox)
+        self.assertIsNone(portal.write_status.accepted_mode)
+        await portal.async_update_wallbox_settings(charge_mode=1)
+        new_selection = portal.write_status.accepted_mode
+        portal.write_status.check_mode(old_selection, portal.wallbox)
+        self.assertEqual(portal.write_status.accepted_mode, new_selection)
+
+    async def test_failed_mode_switch_does_not_enable_override(self):
+        portal = FakePortal()
+        portal.settings["chargeMode"] = 1
+        portal.fail_next_patch = True
+        with self.assertRaises(PortalConnectionError):
+            await portal.async_update_wallbox_settings(charge_mode=4)
+        self.assertIsNone(portal.write_status.accepted_mode)
+
+    async def test_unconfirmed_mode_four_to_one_restores_three_phases(self):
+        portal = FakePortal()
+        portal.settings.update(chargeMode=1, smartMode=True, obcPhase=1)
+        await portal.async_update_wallbox_settings(charge_mode=4)
+        portal.settings["chargeMode"] = 1
+        await portal.async_update_wallbox_settings(charge_mode=1)
+        self.assertEqual(portal.settings["obcPhase"], 3)
+        self.assertEqual(portal.write_status.accepted_mode[0], 1)
+
+    async def test_mode_bridge_requires_acceptance_not_transmission_or_failure(self):
+        for status_code in (400, 500, None):
+            with self.subTest(status_code=status_code):
+                status = SettingsWriteStatus()
+                status.begin({"charge_mode": 4})
+                status.prepare({("g2T", "chargeMode"): 4})
+                self.assertIsNone(status.accepted_mode)
+                status.transmitting()
+                self.assertIsNone(status.accepted_mode)
+                status.failed("Failed", status_code)
+                self.assertIsNone(status.accepted_mode)
+
     async def test_g1t_and_top_level_settings_are_confirmed_without_device_data(self):
         portal = FakePortal()
         portal.wallbox["g1T"] = portal.wallbox.pop("g2T")
@@ -117,6 +187,20 @@ class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(entity.native_value, "Nicht übermittelt")
         self.assertIn("Fehler", entity.extra_state_attributes)
         self.assertIn("nicht der physischen", entity.extra_state_attributes["Hinweis"])
+        for state, icon in (
+            ("Noch keine Änderung", "mdi:information-outline"),
+            ("Wird gesendet", "mdi:cloud-upload-outline"),
+            ("API angenommen – Bestätigung ausstehend", "mdi:timer-sand"),
+            ("Im Portal bestätigt", "mdi:check-circle-outline"),
+            ("Noch nicht im Portal bestätigt", "mdi:clock-alert-outline"),
+            ("Übermittlung unklar", "mdi:help-circle-outline"),
+            ("Abgelehnt", "mdi:close-circle-outline"),
+            ("Nicht übermittelt", "mdi:cloud-off-outline"),
+            ("Unbekannter Zustand", "mdi:help-circle-outline"),
+        ):
+            with self.subTest(state=state):
+                portal.write_status.state = state
+                self.assertEqual(entity.icon, icon)
 
     async def test_real_patch_method_tracks_http_success_rejection_and_timeout(self):
         for code, error, state in (

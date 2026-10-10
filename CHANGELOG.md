@@ -1,5 +1,23 @@
 # Changelog
 
+## Fork 0.7.2 – 2026-10-10
+
+- Ladestrom-Slider sofort nach erfolgreicher API-Annahme von Modus 4 freigeben,
+  mit maximal 60 Sekunden Überbrückung bis zur Portal-Rückmeldung.
+  API-Annahme eines anderen Modus sperrt ihn sofort; Fehler und Timeouts
+  erzeugen keine neue Freigabe.
+- Sofortige Ladestromänderungen bewahren den angenommenen Modus im PATCH,
+  ohne die Überbrückungsfrist zu verlängern. Portalbestätigung bleibt getrennt.
+- Ablauf aktualisiert die Entitäten ohne neue Schreibbefehle; Timer beim
+  Entladen entfernen. Regressionstests für Freigabe, Ablauf, alte Antworten,
+  Fehler, nachfolgende Stromänderungen und Listener ergänzt.
+- Zustandsabhängige Symbole für „Letzte Einstellungsänderung“ ergänzt:
+  Cloud-Upload, Sanduhr, Bestätigung, ausstehende Prüfung und Fehler unterscheiden.
+  Statustexte und Schreiblogik bleiben unverändert.
+- Regressionstest für alle acht Zustandssymbole und unbekannte Zustände ergänzt.
+- Insgesamt 66 automatisierte Tests bestanden; reale Home-Assistant-/Wallbox-
+  Prüfung steht noch aus.
+
 ## Fork 0.7.1 – 2026-10-10
 
 - Globalen Ladestrom-Slider wieder nur in Modus 4 verfügbar machen.

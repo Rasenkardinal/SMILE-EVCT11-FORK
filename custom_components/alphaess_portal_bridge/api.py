@@ -358,13 +358,19 @@ class AlphaESSPortalApi:
         if settings is None:
             raise PortalConnectionError(step="wallbox settings")
 
+        selection = self.write_status.accepted_mode
+        if charge_current is not None and charge_mode is None and selection is not None:
+            # A stale GET must not undo the mode accepted just before this
+            # user-triggered current write in the full-document PATCH.
+            settings["chargeMode"] = selection[0]
+
         if charge_mode is not None:
             allowed_modes = {1, 2, 3, 4} if generation == "g2T" else {0, 1, 2, 3, 4}
             if charge_mode not in allowed_modes:
                 raise ValueError("Nicht unterstützter Lademodus")
             if (
                 generation == "g2T"
-                and settings.get("chargeMode") == 4
+                and (selection[0] if selection is not None else settings.get("chargeMode")) == 4
                 and charge_mode in {1, 2, 3}
                 and settings.get("smartMode") is True
                 and smart_mode is not False
@@ -446,6 +452,11 @@ class AlphaESSPortalApi:
             if requested is not None and generation is not None:
                 expected[(generation, field)] = settings[field]
         original_wallbox = self._find_wallbox_data(configuration, self._wallbox_serial)
+        if (
+            generation is not None
+            and settings.get("chargeMode") != original_wallbox[generation].get("chargeMode")
+        ):
+            expected[(generation, "chargeMode")] = settings["chargeMode"]
         if (
             generation is not None
             and settings.get("obcPhase") != original_wallbox[generation].get("obcPhase")
