@@ -88,6 +88,33 @@ def get_attributes(filename, classname, self_object):
 
 
 class TesterFeedbackScheduleTests(unittest.TestCase):
+    def test_only_custom_current_uses_slider_with_existing_limits(self):
+        source_file = COMPONENT / "number.py"
+        source = ast.parse(source_file.read_text(encoding="utf-8"))
+        namespace = {
+            "NumberMode": SimpleNamespace(BOX="box", SLIDER="slider"),
+            "UnitOfElectricCurrent": SimpleNamespace(AMPERE="A"),
+            "EntityCategory": SimpleNamespace(CONFIG="config"),
+            "AlphaESSWallboxEntity": type("AlphaESSWallboxEntity", (), {}),
+            "NumberEntity": type("NumberEntity", (), {}),
+        }
+        for node in source.body:
+            if isinstance(node, ast.ClassDef):
+                node.body = [
+                    item for item in node.body if isinstance(item, ast.Assign)
+                ] or [ast.Pass()]
+                module = ast.fix_missing_locations(
+                    ast.Module(body=[node], type_ignores=[])
+                )
+                exec(compile(module, str(source_file), "exec"), namespace)
+        custom_current = namespace["AlphaESSWallboxChargeCurrentNumber"]
+        self.assertEqual(custom_current._attr_mode, "slider")
+        self.assertEqual(custom_current._attr_native_min_value, 6)
+        self.assertEqual(custom_current._attr_native_max_value, 16)
+        self.assertEqual(custom_current._attr_native_step, 1)
+        for name in ("AlphaESSHouseholdCurrentNumber", "AlphaESSTimePeriodCurrentNumber"):
+            self.assertEqual(namespace[name]._attr_mode, "box")
+
     def test_schedule_selected_only_in_g2t_schedule_strategy(self):
         for strategy, expected in [(0, False), (1, True), (2, False)]:
             with self.subTest(strategy=strategy):

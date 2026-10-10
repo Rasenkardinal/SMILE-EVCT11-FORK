@@ -2,6 +2,8 @@
 
 ## Noch nicht veröffentlicht – Testerfeedback
 
+- Kundenspezifischen Ladestrom standardmäßig als Slider von 6 bis 16 A
+  in 1-A-Schritten darstellen. Die übrigen Zahlenfelder bleiben unverändert.
 - Anzeige der gewählten Ladeeinstellung und der laut Portal-Modus ausgewählten
   Zeitfenster klargestellt. Gespeicherte Zeiträume bleiben unangetastet.
 - Der benutzerdefinierte Ladestrom wird ausdrücklich als Portal-Sollwert

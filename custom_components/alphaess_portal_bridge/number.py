@@ -46,6 +46,7 @@ class AlphaESSWallboxChargeCurrentNumber(_CurrentNumberBase):
     """Set current for the active custom charging mode."""
 
     _attr_name = "Ladestrom (kundenspezifisch)"
+    _attr_mode = NumberMode.SLIDER
 
     def __init__(self, coordinator: AlphaESSWallboxCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "custom_charge_current")
