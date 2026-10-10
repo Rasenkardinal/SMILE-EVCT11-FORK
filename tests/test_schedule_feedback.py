@@ -73,9 +73,9 @@ def load_current_entity():
 
 
 class CurrentModeTests(unittest.IsolatedAsyncioTestCase):
-    async def test_current_is_available_and_writable_in_all_modes(self):
+    async def test_current_is_available_and_writable_only_in_custom_mode(self):
         cls = load_current_entity()
-        for mode in range(5):
+        for mode in (0, 1, 2, 3, 4, None):
             with self.subTest(mode=mode):
                 writes = []
 
@@ -90,9 +90,14 @@ class CurrentModeTests(unittest.IsolatedAsyncioTestCase):
                 entity = cls.__new__(cls)
                 entity.coordinator = coordinator
                 entity.settings = {"chargeMode": mode}
-                self.assertTrue(entity.available)
-                await entity.async_set_native_value(10)
-                self.assertEqual(writes, [{"charge_current": 10}])
+                self.assertEqual(entity.available, mode == 4)
+                if mode == 4:
+                    await entity.async_set_native_value(10)
+                    self.assertEqual(writes, [{"charge_current": 10}])
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "Kundenspezifische Ladeleistung"):
+                        await entity.async_set_native_value(10)
+                    self.assertEqual(writes, [])
                 self.assertEqual(entity.settings["chargeMode"], mode)
                 coordinator.connected = False
                 self.assertFalse(entity.available)

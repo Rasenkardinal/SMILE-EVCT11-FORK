@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.1 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -43,11 +43,11 @@ wurde durch diesen Fork nicht implementiert.
   einen Slider von **6 bis 16 A in 1-A-Schritten** statt eines Zahlenfelds.
   Die tatsächliche Entitäts-ID kann je nach Home-Assistant-Einrichtung abweichen.
 - Hausstrom-Einstellung und Zeitfenster-Ströme bleiben Zahlenfelder.
-  Der globale Ladestrom-Slider ist unabhängig vom Lademodus bedienbar.
-  Änderungen schreiben nur den Sollwert und wechseln nicht automatisch
-  auf **Kundenspezifische Ladeleistung**. Ob der Server den Wert in anderen
-  Modi annimmt, speichert oder berücksichtigt, muss am eigenen Gerät geprüft
-  werden. Verbindungsfehler und Portal-Ablehnungen werden weiterhin angezeigt.
+  Der globale Ladestrom-Slider ist nur bei **Kundenspezifischer Ladeleistung**
+  (Modus 4) bedienbar. In Modi 1–3 ist er nicht verfügbar; direkte Schreibaufrufe
+  über diese Entität werden ebenfalls blockiert.
+  Änderungen schreiben nur den Sollwert und wechseln den Lademodus nicht.
+  Verbindungsfehler und Portal-Ablehnungen werden weiterhin angezeigt.
   Grenzen von 6–16 A und die Modusprüfung der Zeitfenster-Ströme bleiben bestehen.
 - Individuelle Dashboard-Karten können die Darstellung selbst bestimmen.
   Der Slider ändert nur den Standard-Eingabemodus der Entität, nicht die
@@ -57,10 +57,13 @@ wurde durch diesen Fork nicht implementiert.
   Mit den Smart-Mode-, Ladestrom- und Phasenwahl-Änderungen bestehen insgesamt **39 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.7.0** wird als GitHub-Release **`v0.7.0`** für HACS
-bereitgestellt. Die im Manifest enthaltene Version **0.7.0** kennzeichnet
-den Fork-Stand mit Schreibstatus-Sensor, modusunabhängigem Slider und angepasster Smart-Mode-Logik.
+Die Fork-Version **0.7.1** wird als GitHub-Release **`v0.7.1`** für HACS
+bereitgestellt. Die im Manifest enthaltene Version **0.7.1** kennzeichnet
+den veröffentlichten Fork-Stand mit Schreibstatus-Sensor und angepasster Smart-Mode-Logik.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
+
+**Ab v0.7.1:** Die Ladestrom-Eingabe wurde gegenüber v0.7.0
+wieder auf Modus 4 beschränkt.
 
 ### Letzte Einstellungsänderung (ab 0.7.0)
 
@@ -271,7 +274,7 @@ Kurze Übergangszustände der Wallbox können zwischen zwei Abfragen liegen und 
 
 1. HACS öffnen und **Integrationen → ⋮ → Benutzerdefinierte Repositories** wählen.
 2. `https://github.com/Rasenkardinal/SMILE-EVCT11-FORK` als Repository mit Typ **Integration** hinzufügen.
-3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren, beim Herunterladen das Release **`v0.7.0`** (oder ein neueres Fork-Release) auswählen und anschließend Home Assistant neu starten.
+3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren, beim Herunterladen das Release **`v0.7.1`** (oder ein neueres Fork-Release) auswählen und anschließend Home Assistant neu starten.
 4. Eine bereits eingerichtete Integration nicht löschen. Zugangsdaten und Wallbox-Seriennummer bleiben im vorhandenen Config Entry erhalten.
 5. Auf der Geräteseite unter Diagnose prüfen, welches Portal-Profil (`g1T` oder `g2T`) erkannt wurde.
 

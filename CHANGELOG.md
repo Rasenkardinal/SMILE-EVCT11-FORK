@@ -1,5 +1,13 @@
 # Changelog
 
+## Fork 0.7.1 – 2026-10-10
+
+- Globalen Ladestrom-Slider wieder nur in Modus 4 verfügbar machen.
+  Direkte Schreibaufrufe über die Entität in anderen oder unbekannten Modi
+  werden blockiert. Smart-Mode-, Phasen- und Zeitfensterlogik bleiben unverändert.
+- Regressionstest für Freigabe in Modus 4 und Sperre in Modi 0–3 sowie bei
+  unbekanntem Modus aktualisiert.
+
 ## Fork 0.7.0 – 2026-10-10
 
 - Diagnose-Sensor „Letzte Einstellungsänderung“ für lokale Einstellungs- und
