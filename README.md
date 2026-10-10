@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.6.1 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.6.2 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -31,8 +31,12 @@ wurde durch diesen Fork nicht implementiert.
   Laut Betreiberbeobachtung ignoriert der Server Smart Mode in diesem Lademodus.
   Dieses Verhalten ist nicht unabhängig für alle Firmwarestände bestätigt.
   Der Schalter zeigt das gespeicherte Flag, nicht eine bestätigte Wirksamkeit.
-- Die Smart-Mode-Prüfungen für Zeitsteuerung, 3-phasige OBC-Sollwahl und
-  gültige Lademodi bleiben bestehen. Ein Regressionstest prüft den Wechsel in
+- Bei **Kundenspezifischer Ladeleistung** (Modus 4) ist die OBC-Phasenwahl
+  auch bei gespeichertem Smart Mode frei. In Modi 1–3 bleibt die Sperre für
+  1-/2-phasige Auswahl bei eingeschaltetem Smart Mode bestehen.
+  Die Prüfungen für Zeitsteuerung, 3-phasige OBC-Sollwahl beim Einschalten
+  von Smart Mode und gültige Lademodi bleiben bestehen.
+  Ein Regressionstest prüft den Wechsel in
   beide Richtungen und die unveränderten übrigen Konfigurationswerte.
 - **10.10.2026 – Ladestrom als Slider:** Die Entität
   `number.alphaess_wallbox_ladestrom_kundenspezifisch` verwendet standardmäßig
@@ -50,11 +54,11 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den Smart-Mode- und Ladestrom-Änderungen bestehen insgesamt **33 automatisierte Tests**;
+  Mit den Smart-Mode-, Ladestrom- und Phasenwahl-Änderungen bestehen insgesamt **35 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.6.1** wird als GitHub-Release **`v0.6.1`** für HACS
-bereitgestellt. Die im Manifest enthaltene Version **0.6.1** kennzeichnet
+Die Fork-Version **0.6.2** wird als GitHub-Release **`v0.6.2`** für HACS
+bereitgestellt. Die im Manifest enthaltene Version **0.6.2** kennzeichnet
 den Fork-Stand mit modusunabhängigem Slider und angepasster Smart-Mode-Logik.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
@@ -187,7 +191,15 @@ aktive Smart-Mode-Regelung in diesem Modus. Ob der Server das Flag beim Wechsel
 erhält und beim Rückwechsel wieder berücksichtigt, ist an der eigenen Wallbox
 zu prüfen; die Integration erzwingt dies nicht.
 
-Ein Wechsel auf Zeitgesteuertes Aufladen bei aktivem Smart Mode wird blockiert. Vor einem manuellen Wechsel auf 1- oder 2-phasig muss Smart Mode deaktiviert werden.
+Ein Wechsel auf Zeitgesteuertes Aufladen bei aktivem Smart Mode wird blockiert.
+Vor einem manuellen Wechsel auf 1- oder 2-phasig muss Smart Mode in Lademodi
+1–3 deaktiviert werden. In Modus 4 ist diese Phasenwahl auch bei eingeschaltetem
+Smart Mode zulässig; das Flag und der Lademodus bleiben dabei unverändert.
+Die Ausnahme bestätigt keine physische Umsetzung durch die Wallbox.
+
+Beim Rückwechsel von Modus 4 zu Modus 1–3 werden Phasenwahl und Smart Mode
+nicht automatisch angepasst. Für Smart-Mode-Betrieb dort wieder die
+3-phasige OBC-Sollwahl einstellen.
 
 ## Bekannte Einschränkungen und offene Prüfungen
 
@@ -213,7 +225,7 @@ Kurze Übergangszustände der Wallbox können zwischen zwei Abfragen liegen und 
 
 1. HACS öffnen und **Integrationen → ⋮ → Benutzerdefinierte Repositories** wählen.
 2. `https://github.com/Rasenkardinal/SMILE-EVCT11-FORK` als Repository mit Typ **Integration** hinzufügen.
-3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren, beim Herunterladen das Release **`v0.6.1`** (oder ein neueres Fork-Release) auswählen und anschließend Home Assistant neu starten.
+3. Die **AlphaESS Wallbox Bridge** aus diesem Fork installieren, beim Herunterladen das Release **`v0.6.2`** (oder ein neueres Fork-Release) auswählen und anschließend Home Assistant neu starten.
 4. Eine bereits eingerichtete Integration nicht löschen. Zugangsdaten und Wallbox-Seriennummer bleiben im vorhandenen Config Entry erhalten.
 5. Auf der Geräteseite unter Diagnose prüfen, welches Portal-Profil (`g1T` oder `g2T`) erkannt wurde.
 

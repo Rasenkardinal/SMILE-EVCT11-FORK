@@ -1,5 +1,14 @@
 # Changelog
 
+## Fork 0.6.2 – 2026-10-10
+
+- OBC-Phasenwahl in Lademodus 4 auch bei gespeichertem Smart Mode freigegeben.
+  Sperre für Modi 1–3 und 3-Phasen-Prüfung beim Einschalten von Smart Mode
+  bleiben bestehen. Modus und Smart-Mode-Flag werden nicht automatisch geändert.
+- Regressionstests prüfen alle Phasen in Modus 4 sowie die beibehaltenen
+  Sperren in Modi 1–3 und bei fehlendem Modus.
+- Insgesamt 35 automatisierte Tests bestanden.
+
 ## Fork 0.6.1 – 2026-10-10
 
 - Globale Ladestromeingabe unabhängig vom Lademodus freigegeben:

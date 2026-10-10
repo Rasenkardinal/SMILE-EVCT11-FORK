@@ -353,7 +353,11 @@ class AlphaESSPortalApi:
         if obc_phase is not None:
             if generation != "g2T" or obc_phase not in {1, 2, 3}:
                 raise ValueError("Nicht unterstützte OBC-Phasenwahl")
-            if settings.get("smartMode") is True and obc_phase != 3:
+            if (
+                settings.get("smartMode") is True
+                and settings.get("chargeMode") != 4
+                and obc_phase != 3
+            ):
                 raise ValueError("Smart Mode vor Änderung auf 1- oder 2-phasiges Laden deaktivieren")
             settings["obcPhase"] = obc_phase
 

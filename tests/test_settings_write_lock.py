@@ -204,7 +204,7 @@ class SettingsWriteTests(unittest.IsolatedAsyncioTestCase):
             ({"chargeStrategy": 1, "obcPhase": 3}, {"smart_mode": True}),
             ({"obcPhase": 1}, {"smart_mode": True}),
             ({"smartMode": True, "obcPhase": 3}, {"charge_strategy": 1}),
-            ({"smartMode": True, "obcPhase": 3}, {"obc_phase": 1}),
+            ({"chargeMode": 1, "smartMode": True, "obcPhase": 3}, {"obc_phase": 1}),
         ):
             with self.subTest(settings=settings, update=update):
                 portal = FakePortal()
@@ -214,6 +214,32 @@ class SettingsWriteTests(unittest.IsolatedAsyncioTestCase):
                     await portal.async_update_wallbox_settings(**update)
                 self.assertEqual(portal.configuration, original)
                 self.assertEqual(portal.patches, [])
+
+    async def test_custom_mode_allows_all_phases_with_smart_mode_enabled(self):
+        for phase in (1, 2, 3):
+            with self.subTest(phase=phase):
+                portal = FakePortal()
+                portal.settings.update(chargeMode=4, smartMode=True, obcPhase=3)
+                expected = copy.deepcopy(portal.configuration)
+                expected["evCharger"][0]["g2T"]["obcPhase"] = phase
+                await portal.async_update_wallbox_settings(obc_phase=phase)
+                self.assertEqual(portal.configuration, expected)
+                self.assertEqual(len(portal.patches), 0 if phase == 3 else 1)
+
+    async def test_non_custom_modes_keep_smart_mode_phase_guard(self):
+        for mode in (1, 2, 3, None):
+            for phase in (1, 2, 3):
+                with self.subTest(mode=mode, phase=phase):
+                    portal = FakePortal()
+                    portal.settings.update(chargeMode=mode, smartMode=True, obcPhase=3)
+                    original = copy.deepcopy(portal.configuration)
+                    if phase == 3:
+                        await portal.async_update_wallbox_settings(obc_phase=phase)
+                    else:
+                        with self.assertRaises(ValueError):
+                            await portal.async_update_wallbox_settings(obc_phase=phase)
+                    self.assertEqual(portal.configuration, original)
+                    self.assertEqual(portal.patches, [])
 
     async def test_different_fields_are_serialized_and_preserved(self):
         portal = FakePortal()
