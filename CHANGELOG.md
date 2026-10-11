@@ -1,5 +1,13 @@
 # Changelog
 
+## Fork 0.7.4 – 2026-10-11
+
+- Globalen Ladestrom-Slider in allen Lademodi freigeben. Die Modusprüfung
+  bleibt für Zeitfenster-Ströme bestehen; globale Stromänderungen wechseln
+  den Lademodus weiterhin nicht.
+- Regressionstests für die Verfügbarkeit und Schreibbarkeit in allen Modi
+  ergänzt.
+
 ## Fork 0.7.3 – 2026-10-10
 
 - Portal-Rücklesung akzeptiert numerisch gleiche Ganz- und Dezimalzahlen,

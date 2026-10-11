@@ -71,22 +71,7 @@ class AlphaESSWallboxChargeCurrentNumber(_CurrentNumberBase):
         value = self.settings.get("chargeCurrent")
         return float(value) if isinstance(value, (int, float)) else None
 
-    @property
-    def _custom_mode_selected(self) -> bool:
-        selection = self.coordinator.api.write_status.accepted_mode
-        return (
-            selection[0] == 4
-            if selection is not None
-            else self.settings.get("chargeMode") == 4
-        )
-
-    @property
-    def available(self) -> bool:
-        return super().available and self._custom_mode_selected
-
     async def async_set_native_value(self, value: float) -> None:
-        if not self._custom_mode_selected:
-            raise HomeAssistantError("Wähle zuerst Kundenspezifische Ladeleistung")
         try:
             await self.coordinator.api.async_update_wallbox_settings(charge_current=int(value))
         except (AuthenticationError, PortalConnectionError, ValueError) as err:

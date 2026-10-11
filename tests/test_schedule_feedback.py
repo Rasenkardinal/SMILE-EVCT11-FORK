@@ -73,7 +73,7 @@ def load_current_entity():
 
 
 class CurrentModeTests(unittest.IsolatedAsyncioTestCase):
-    async def test_accepted_mode_immediately_controls_slider_and_write_guard(self):
+    async def test_accepted_mode_does_not_gate_current_slider_or_write(self):
         cls = load_current_entity()
         writes = []
 
@@ -96,15 +96,13 @@ class CurrentModeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(writes, [{"charge_current": 10}])
         self.assertEqual(entity.settings["chargeMode"], 1)
         status.accepted_mode = None
-        self.assertFalse(entity.available)
-        entity.settings["chargeMode"] = 4
+        self.assertTrue(entity.available)
         status.accepted_mode = (1, 60)
-        self.assertFalse(entity.available)
-        with self.assertRaises(RuntimeError):
-            await entity.async_set_native_value(10)
-        self.assertEqual(len(writes), 1)
+        self.assertTrue(entity.available)
+        await entity.async_set_native_value(11)
+        self.assertEqual(writes, [{"charge_current": 10}, {"charge_current": 11}])
 
-    async def test_current_is_available_and_writable_only_in_custom_mode(self):
+    async def test_current_is_available_and_writable_in_all_modes(self):
         cls = load_current_entity()
         for mode in (0, 1, 2, 3, 4, None):
             with self.subTest(mode=mode):
@@ -124,14 +122,9 @@ class CurrentModeTests(unittest.IsolatedAsyncioTestCase):
                 entity = cls.__new__(cls)
                 entity.coordinator = coordinator
                 entity.settings = {"chargeMode": mode}
-                self.assertEqual(entity.available, mode == 4)
-                if mode == 4:
-                    await entity.async_set_native_value(10)
-                    self.assertEqual(writes, [{"charge_current": 10}])
-                else:
-                    with self.assertRaisesRegex(RuntimeError, "Kundenspezifische Ladeleistung"):
-                        await entity.async_set_native_value(10)
-                    self.assertEqual(writes, [])
+                self.assertTrue(entity.available)
+                await entity.async_set_native_value(10)
+                self.assertEqual(writes, [{"charge_current": 10}])
                 self.assertEqual(entity.settings["chargeMode"], mode)
                 coordinator.connected = False
                 self.assertFalse(entity.available)

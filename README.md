@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.3 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.4 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -43,9 +43,7 @@ wurde durch diesen Fork nicht implementiert.
   einen Slider von **6 bis 16 A in 1-A-Schritten** statt eines Zahlenfelds.
   Die tatsächliche Entitäts-ID kann je nach Home-Assistant-Einrichtung abweichen.
 - Hausstrom-Einstellung und Zeitfenster-Ströme bleiben Zahlenfelder.
-  Der globale Ladestrom-Slider ist nur bei **Kundenspezifischer Ladeleistung**
-  (Modus 4) bedienbar. In Modi 1–3 ist er nicht verfügbar; direkte Schreibaufrufe
-  über diese Entität werden ebenfalls blockiert.
+  Der globale Ladestrom-Slider ist in allen Lademodi bedienbar.
   Änderungen schreiben nur den Sollwert und wechseln den Lademodus nicht.
   Verbindungsfehler und Portal-Ablehnungen werden weiterhin angezeigt.
   Grenzen von 6–16 A und die Modusprüfung der Zeitfenster-Ströme bleiben bestehen.
@@ -57,10 +55,9 @@ wurde durch diesen Fork nicht implementiert.
   Mit den bisherigen Änderungen bestehen insgesamt **70 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.7.3** wird als GitHub-Release **`v0.7.3`** für HACS
-bereitgestellt. Die im Manifest enthaltene Version **0.7.3** kennzeichnet
-den veröffentlichten Fork-Stand mit korrigierter numerischer Rückleseprüfung,
-Diagnoseattributen, sofortiger Slider-Freigabe und Statussymbolen.
+Die Fork-Version **0.7.4** wird als GitHub-Release **`v0.7.4`** für HACS
+bereitgestellt. Die im Manifest enthaltene Version **0.7.4** kennzeichnet
+den Fork-Stand mit globalem Ladestrom-Slider in allen Lademodi.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Ab v0.7.1:** Die Ladestrom-Eingabe wurde gegenüber v0.7.0
