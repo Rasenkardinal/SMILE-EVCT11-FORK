@@ -1,5 +1,11 @@
 # Changelog
 
+## Fork 0.7.7 – 2026-10-11
+
+- Lademodus 4 in Selectoren und Sensoren als „Benutzerdefinierte Ladeleistung“
+  anzeigen. Der interne Moduswert und die Schreiblogik bleiben unverändert.
+- Zeitfenster-Hinweis und Dokumentation auf die neue Bezeichnung aktualisieren.
+
 ## Fork 0.7.6 – 2026-10-11
 
 - Veralteten Hinweis am globalen Ladestrom-Slider korrigieren: Er ist in allen

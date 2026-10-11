@@ -175,6 +175,28 @@ def get_attributes(filename, classname, self_object):
 
 
 class TesterFeedbackScheduleTests(unittest.TestCase):
+    def test_mode_four_label_is_consistent_for_g1t_and_g2t_selectors(self):
+        source_file = COMPONENT / "entity.py"
+        source = ast.parse(source_file.read_text(encoding="utf-8"))
+        assignments = [
+            node for node in source.body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id in {"G1_MODES", "G2_MODES"}
+                for target in node.targets
+            )
+        ]
+        namespace = {}
+        module = ast.fix_missing_locations(ast.Module(body=assignments, type_ignores=[]))
+        exec(compile(module, str(source_file), "exec"), namespace)
+        for name in ("G1_MODES", "G2_MODES"):
+            with self.subTest(mode_map=name):
+                self.assertEqual(
+                    namespace[name]["Benutzerdefinierte Ladeleistung"], 4
+                )
+                self.assertNotIn("Kundenspezifische Ladeleistung", namespace[name])
+
     def test_only_custom_current_uses_slider_with_existing_limits(self):
         source_file = COMPONENT / "number.py"
         source = ast.parse(source_file.read_text(encoding="utf-8"))

@@ -21,13 +21,13 @@ G1_MODES = {
     "Langsamladung": 1,
     "Schonladung / Standardleistung": 2,
     "Schnellladung": 3,
-    "Kundenspezifische Ladeleistung": 4,
+    "Benutzerdefinierte Ladeleistung": 4,
 }
 G2_MODES = {
     "Langsamladung": 1,
     "Schonladung / Standardleistung": 2,
     "Schnellladung": 3,
-    "Kundenspezifische Ladeleistung": 4,
+    "Benutzerdefinierte Ladeleistung": 4,
 }
 STRATEGIES = {
     "Manuell": 0,

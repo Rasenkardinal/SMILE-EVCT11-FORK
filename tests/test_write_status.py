@@ -231,7 +231,7 @@ class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
                 1: "Langsamladung",
                 2: "Schonladung / Standardleistung",
                 3: "Schnellladung",
-                4: "Kundenspezifische Ladeleistung",
+                4: "Benutzerdefinierte Ladeleistung",
             },
             "_STRATEGY_LABELS": {
                 0: "Manuell",
@@ -261,13 +261,13 @@ class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
         }
         self.assertEqual(
             entity.native_value,
-            "Ladestrom: 10 A; Lademodus: Kundenspezifische Ladeleistung; "
+            "Ladestrom: 10 A; Lademodus: Benutzerdefinierte Ladeleistung; "
             "Zeitrahmen 1 – Ladestrom: 12 A",
         )
         attrs = entity.extra_state_attributes
         self.assertEqual(attrs["Änderungen"], [
             "Ladestrom: 10 A",
-            "Lademodus: Kundenspezifische Ladeleistung",
+            "Lademodus: Benutzerdefinierte Ladeleistung",
             "Zeitrahmen 1 – Ladestrom: 12 A",
         ])
         self.assertIn("nicht deren Übernahme", attrs["Hinweis"])

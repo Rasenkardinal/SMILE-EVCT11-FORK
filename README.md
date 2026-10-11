@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.6 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.7 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -23,7 +23,7 @@ wurde durch diesen Fork nicht implementiert.
 
 ### Eigene Änderungen gegenüber dem Original
 
-- **10.10.2026 – Smart Mode und kundenspezifische Ladeleistung:** Die beiden
+- **10.10.2026 – Smart Mode und benutzerdefinierte Ladeleistung:** Die beiden
   gegenseitigen Sperren entfallen. Zwischen Langsam-/Schon-/Schnellladung und
   kundenspezifischer Ladeleistung kann gewechselt werden, ohne die gespeicherte
   Smart-Mode-Einstellung zu ändern. Smart Mode kann auch bei kundenspezifischer
@@ -52,12 +52,12 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den bisherigen Änderungen bestehen insgesamt **71 automatisierte Tests**;
+  Mit den bisherigen Änderungen bestehen insgesamt **72 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.7.6** wird als GitHub-Release **`v0.7.6`** für HACS
-bereitgestellt. Sie korrigiert den Hinweistext des Ladestrom-Sliders.
-Version **0.7.5** ergänzte den Sensor für die zuletzt angeforderte Änderung.
+Die Fork-Version **0.7.7** wird als GitHub-Release **`v0.7.7`** für HACS
+bereitgestellt. Sie bezeichnet Modus 4 jetzt als „Benutzerdefinierte
+Ladeleistung“.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.
@@ -80,7 +80,7 @@ beim Senden aktualisiert, unabhängig vom normalen Polling.
 
 **Ab 0.7.5:** Der zusätzliche Sensor **Letzte angeforderte Änderung** zeigt
 die lesbare Zusammenfassung der zuletzt angeforderten Einstellungen, zum
-Beispiel `Ladestrom: 10 A` oder `Lademodus: Kundenspezifische Ladeleistung`.
+Beispiel `Ladestrom: 10 A` oder `Lademodus: Benutzerdefinierte Ladeleistung`.
 Bei Zeitfenster-Schreibvorgängen wird auch die Zeitrahmennummer angezeigt.
 Der Sensor beschreibt den Auftrag und behauptet keine Übernahme; dafür bleibt
 der API-/Portalstatussensor zuständig.
@@ -147,7 +147,7 @@ Dies ist ein Community-Projekt und keine offizielle AlphaESS-Integration. Die G2
 - Live-Status und Ladeleistung
 - Fahrzeug angeschlossen und Ladestecker verriegelt als Ja/Nein
 - Ladeeinstellung: **Manuell / Zeitgesteuertes Aufladen / Plug and Play**
-- Lademodus: **Langsamladung / Schonladung / Schnellladung / Kundenspezifische Ladeleistung**
+- Lademodus: **Langsamladung / Schonladung / Schnellladung / Benutzerdefinierte Ladeleistung**
 - kundenspezifischer Ladestrom **6–16 A**
 - OBC-Phasenwahl **1 / 2 / 3**
 - Smart Mode mit Schutzprüfungen
@@ -248,7 +248,7 @@ Smart Mode wird nur für G2T angeboten. Beim Aktivieren prüft die Integration:
 - Zeitgesteuertes Aufladen darf nicht aktiv sein.
 - Die OBC-Phasenwahl muss auf **3-phasig** stehen.
 - Ein gültiger Lademodus muss ausgewählt sein; im Fork ist auch
-  **Kundenspezifische Ladeleistung** zulässig.
+  **Benutzerdefinierte Ladeleistung** zulässig.
 
 Der Fork lässt das Smart-Mode-Flag beim Wechsel des Lademodus unverändert.
 Laut Betreiberbeobachtung wird Smart Mode bei kundenspezifischer Ladeleistung
