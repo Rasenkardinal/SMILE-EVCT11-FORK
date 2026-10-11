@@ -43,7 +43,7 @@ class _CurrentNumberBase(AlphaESSWallboxEntity, NumberEntity):
 
 
 class AlphaESSWallboxChargeCurrentNumber(_CurrentNumberBase):
-    """Set the current only in custom charging mode."""
+    """Set the requested charging current in any charging mode."""
 
     _attr_name = "Ladestrom (kundenspezifisch)"
     _attr_mode = NumberMode.SLIDER
@@ -56,10 +56,8 @@ class AlphaESSWallboxChargeCurrentNumber(_CurrentNumberBase):
         return {
             "Hinweis": (
                 "Dies ist der vom AlphaESS-Portal gemeldete Soll-Ladestrom. "
-                "Die Eingabe ist nur bei Kundenspezifischer Ladeleistung "
-                "(Lademodus 4) verfügbar und wechselt den Lademodus nicht. "
-                "Nach API-Annahme von Modus 4 wird die Eingabe sofort für "
-                "maximal 60 Sekunden bis zur Portal-Rückmeldung freigegeben. "
+                "Die Eingabe ist in allen Lademodi verfügbar und wechselt den "
+                "Lademodus nicht. "
                 "Eine erfolgreiche API-Antwort oder geänderte Anzeige bestätigt "
                 "noch keine physisch erfolgte Ladeleistungsänderung. "
                 "Für den tatsächlichen Ladezustand die Live-Leistung prüfen."

@@ -1,5 +1,11 @@
 # Changelog
 
+## Fork 0.7.6 – 2026-10-11
+
+- Veralteten Hinweis am globalen Ladestrom-Slider korrigieren: Er ist in allen
+  Lademodi verfügbar; eine zeitweise Freigabe nach Moduswechsel gibt es nicht.
+- Docstring der Slider-Entität an das aktuelle Verhalten anpassen.
+
 ## Fork 0.7.5 – 2026-10-11
 
 - Zusätzlichen Diagnosesensor „Letzte angeforderte Änderung“ ergänzen.

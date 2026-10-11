@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.5 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.6 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -55,9 +55,9 @@ wurde durch diesen Fork nicht implementiert.
   Mit den bisherigen Änderungen bestehen insgesamt **71 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.7.4** wird als GitHub-Release **`v0.7.4`** für HACS
-bereitgestellt. Die Version **0.7.5** ergänzt lokal den Sensor für die zuletzt
-angeforderte Änderung; ein GitHub-Release für diese Version steht noch aus.
+Die Fork-Version **0.7.6** wird als GitHub-Release **`v0.7.6`** für HACS
+bereitgestellt. Sie korrigiert den Hinweistext des Ladestrom-Sliders.
+Version **0.7.5** ergänzte den Sensor für die zuletzt angeforderte Änderung.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.
