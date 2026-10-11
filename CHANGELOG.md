@@ -1,5 +1,13 @@
 # Changelog
 
+## Fork 0.7.5 – 2026-10-11
+
+- Zusätzlichen Diagnosesensor „Letzte angeforderte Änderung“ ergänzen.
+  Er zeigt die lesbare Zusammenfassung der angeforderten globalen und
+  Zeitfenster-Einstellungen; der API-/Portalstatus bleibt separat.
+- Regressionstest für Änderungsbeschreibung und Abgrenzung zwischen Auftrag
+  und Übernahme ergänzt.
+
 ## Fork 0.7.4 – 2026-10-11
 
 - Globalen Ladestrom-Slider in allen Lademodi freigeben. Die Modusprüfung

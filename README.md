@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.4 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.5 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -52,31 +52,17 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den bisherigen Änderungen bestehen insgesamt **70 automatisierte Tests**;
+  Mit den bisherigen Änderungen bestehen insgesamt **71 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
 Die Fork-Version **0.7.4** wird als GitHub-Release **`v0.7.4`** für HACS
-bereitgestellt. Die im Manifest enthaltene Version **0.7.4** kennzeichnet
-den Fork-Stand mit globalem Ladestrom-Slider in allen Lademodi.
+bereitgestellt. Die Version **0.7.5** ergänzt lokal den Sensor für die zuletzt
+angeforderte Änderung; ein GitHub-Release für diese Version steht noch aus.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
-**Ab v0.7.1:** Die Ladestrom-Eingabe wurde gegenüber v0.7.0
-wieder auf Modus 4 beschränkt.
-
-**Ab v0.7.2:** Nach erfolgreicher API-Annahme eines Wechsels
-auf Modus 4 wird der Slider sofort freigegeben, ohne die vollständige Rücklesung
-abzuwarten. Die vorläufige Freigabe gilt maximal **60 Sekunden**. Eine passende
-Portal-Rückmeldung beendet die Überbrückung; danach zählt wieder der gelesene
-Modus. Ohne Bestätigung fällt die Freigabe nach Ablauf auf den Portalmodus
-zurück. Abgelehnte oder unklare Umschaltungen aktivieren keine neue Freigabe.
-Auch ein angenommener Wechsel auf Modi 1–3 sperrt den Slider sofort.
-Verbindungsfehler deaktivieren ihn weiterhin.
-
-Eine direkt folgende Ladestromänderung bewahrt den gerade angenommenen Modus
-im vollständigen PATCH, damit eine alte Portal-Antwort ihn nicht zurücksetzt.
-Dieser zusätzliche, vom Benutzer ausgelöste Schreibvorgang verlängert die
-60-Sekunden-Frist nicht. Die Portalbestätigung im Diagnose-Sensor bleibt
-unverändert getrennt; gelesene Zustände werden nicht künstlich überschrieben.
+**Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.
+Seit v0.7.4 ist der Slider in allen Lademodi verfügbar. Eine Ladestromänderung
+schreibt weiterhin nur den Sollwert und wechselt den Lademodus nicht.
 
 ### Letzte Einstellungsänderung (ab 0.7.0)
 
@@ -91,9 +77,13 @@ die automatische Symbolwahl überschreiben. Farben werden nicht vorgegeben.
 Der zusätzliche Diagnose-Sensor **Letzte Einstellungsänderung** zeigt den
 letzten lokalen Auftrag für Einstellungen oder Zeitfenster. Er wird bereits
 beim Senden aktualisiert, unabhängig vom normalen Polling.
-Die neue Funktion ist durch Regressionstests abgesichert; insgesamt bestehen
-**70 automatisierte Tests**. Ein Test in einer laufenden Home-Assistant-Instanz
-mit realer Wallbox steht noch aus.
+
+**Ab 0.7.5:** Der zusätzliche Sensor **Letzte angeforderte Änderung** zeigt
+die lesbare Zusammenfassung der zuletzt angeforderten Einstellungen, zum
+Beispiel `Ladestrom: 10 A` oder `Lademodus: Kundenspezifische Ladeleistung`.
+Bei Zeitfenster-Schreibvorgängen wird auch die Zeitrahmennummer angezeigt.
+Der Sensor beschreibt den Auftrag und behauptet keine Übernahme; dafür bleibt
+der API-/Portalstatussensor zuständig.
 
 | Zustand | Bedeutung |
 |---|---|

@@ -37,6 +37,78 @@ def _first_value(data: dict[str, Any] | None, *keys: str) -> Any:
     return None
 
 
+_MODE_LABELS = {
+    0: "ECO-Ladung",
+    1: "Langsamladung",
+    2: "Schonladung / Standardleistung",
+    3: "Schnellladung",
+    4: "Kundenspezifische Ladeleistung",
+}
+_STRATEGY_LABELS = {
+    0: "Manuell",
+    1: "Zeitgesteuertes Aufladen",
+    2: "Plug and Play",
+}
+_PHASE_LABELS = {1: "1-phasig", 2: "2-phasig", 3: "3-phasig"}
+
+
+def _change_description(path: str, value: Any) -> str:
+    """Format one requested setting for the latest-change sensor."""
+    parts = path.split(".")
+    period = None
+    if len(parts) >= 4 and parts[-3] == "timePeriods" and parts[-2].isdigit():
+        period = int(parts[-2]) + 1
+        field = parts[-1]
+    else:
+        field = parts[-1]
+
+    labels = {
+        "chargeMode": "Lademodus",
+        "charge_mode": "Lademodus",
+        "chargeCurrent": "Ladestrom",
+        "charge_current": "Ladestrom",
+        "chargeStrategy": "Ladestrategie",
+        "charge_strategy": "Ladestrategie",
+        "obcPhase": "OBC-Phasenwahl",
+        "obc_phase": "OBC-Phasenwahl",
+        "smartMode": "Smart Mode",
+        "smart_mode": "Smart Mode",
+        "houseHoldCurrent": "Hausstrom-Einstellung",
+        "household_current": "Hausstrom-Einstellung",
+        "allowInstallersControl": "Installateursteuerung",
+        "installer_control_allowed": "Installateursteuerung",
+        "gunLineSelfLockEnable": "Kabel-Selbstverriegelung",
+        "gun_line_self_lock_enabled": "Kabel-Selbstverriegelung",
+        "isEnable": "Aktivierung",
+        "enabled": "Aktivierung",
+        "startTime": "Startzeit",
+        "start_time": "Startzeit",
+        "endTime": "Endzeit",
+        "end_time": "Endzeit",
+    }
+    label = labels.get(field, field.replace("_", " "))
+    if period is not None:
+        label = f"Zeitrahmen {period} – {label}"
+
+    if field in {"chargeMode", "charge_mode"}:
+        value = _MODE_LABELS.get(value, f"Modus {value}")
+    elif field in {"chargeStrategy", "charge_strategy"}:
+        value = _STRATEGY_LABELS.get(value, f"Strategie {value}")
+    elif field in {"obcPhase", "obc_phase"}:
+        value = _PHASE_LABELS.get(value, f"{value} Phasen")
+    elif field in {"chargeCurrent", "charge_current"}:
+        value = f"{value} A"
+    elif field in {"houseHoldCurrent", "household_current"}:
+        value = f"{value} A"
+    elif field in {
+        "smartMode", "smart_mode", "allowInstallersControl",
+        "installer_control_allowed", "gunLineSelfLockEnable",
+        "gun_line_self_lock_enabled", "isEnable", "enabled",
+    }:
+        value = "Ein" if value else "Aus"
+    return f"{label}: {value}"
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -46,6 +118,7 @@ async def async_setup_entry(
         [
             AlphaESSWallboxStatusSensor(coordinator, entry),
             AlphaESSSettingsWriteStatusSensor(coordinator, entry),
+            AlphaESSLatestSettingsChangeSensor(coordinator, entry),
             AlphaESSWallboxPowerSensor(coordinator, entry),
             AlphaESSYesNoSensor(coordinator, entry, "Fahrzeug angeschlossen", "vehicle_connected"),
             AlphaESSYesNoSensor(coordinator, entry, "Ladestecker verriegelt", "gun_locked"),
@@ -108,6 +181,76 @@ class AlphaESSSettingsWriteStatusSensor(AlphaESSWallboxEntity, SensorEntity):
                 "Status wird beim Neustart zurückgesetzt."
             ),
         }
+
+
+class AlphaESSLatestSettingsChangeSensor(AlphaESSWallboxEntity, SensorEntity):
+    """Describe the settings requested by the latest local write attempt."""
+
+    _attr_name = "Letzte angeforderte Änderung"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:playlist-edit"
+
+    def __init__(self, coordinator: AlphaESSWallboxCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "last_settings_change")
+
+    @property
+    def available(self) -> bool:
+        """Keep the in-memory write details visible when polling is unavailable."""
+        return True
+
+    @property
+    def _requested_changes(self) -> dict[str, Any]:
+        requested = self.coordinator.api.write_status.attributes.get("Angefordert", {})
+        return requested if isinstance(requested, dict) else {}
+
+    @property
+    def _descriptions(self) -> list[str]:
+        period = self._requested_changes.get("Zeitrahmen")
+        return [
+            _change_description(
+                (
+                    f"g2T.timePeriods.{int(period) - 1}.{path}"
+                    if period is not None
+                    and str(period).isdigit()
+                    and path in {
+                        "enabled", "start_time", "end_time", "charge_mode",
+                        "charge_current",
+                    }
+                    else path
+                ),
+                value,
+            )
+            for path, value in self._requested_changes.items()
+            if isinstance(path, str) and path != "Zeitrahmen"
+        ]
+
+    @property
+    def native_value(self) -> str:
+        if not self._requested_changes:
+            return "Noch keine Änderung"
+        descriptions = self._descriptions
+        summary = "; ".join(descriptions)
+        if len(summary) > 255:
+            return f"Mehrere Einstellungen ({len(descriptions)})"
+        return summary or "Änderungsdetails nicht verfügbar"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        status = self.coordinator.api.write_status
+        attributes: dict[str, Any] = {
+            "Änderungen": self._descriptions,
+            "Hinweis": (
+                "Zeigt die zuletzt angeforderten Einstellungen, nicht deren "
+                "Übernahme. Den API- und Portalstatus zeigt der separate "
+                "Sensor „Letzte Einstellungsänderung“."
+            ),
+        }
+        requested = self._requested_changes
+        if requested:
+            attributes["Angefordert"] = requested
+        if "Gestartet um" in status.attributes:
+            attributes["Gestartet um"] = status.attributes["Gestartet um"]
+        return attributes
 
 
 class AlphaESSWallboxStatusSensor(AlphaESSWallboxEntity, SensorEntity):

@@ -202,6 +202,77 @@ class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
                 portal.write_status.state = state
                 self.assertEqual(entity.icon, icon)
 
+    async def test_latest_change_sensor_describes_requested_settings(self):
+        source = ast.parse(API_FILE.with_name("sensor.py").read_text(encoding="utf-8"))
+        formatter = next(
+            node for node in source.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_change_description"
+        )
+        cls = next(
+            node for node in source.body
+            if isinstance(node, ast.ClassDef)
+            and node.name == "AlphaESSLatestSettingsChangeSensor"
+        )
+
+        class BaseEntity:
+            def __init__(self, coordinator, entry, key):
+                self.coordinator = coordinator
+                self.unique_key = key
+
+        namespace = {
+            "AlphaESSWallboxEntity": BaseEntity,
+            "SensorEntity": type("SensorEntity", (), {}),
+            "AlphaESSWallboxCoordinator": object,
+            "ConfigEntry": object,
+            "EntityCategory": SimpleNamespace(DIAGNOSTIC="diagnostic"),
+            "Any": object,
+            "_MODE_LABELS": {
+                0: "ECO-Ladung",
+                1: "Langsamladung",
+                2: "Schonladung / Standardleistung",
+                3: "Schnellladung",
+                4: "Kundenspezifische Ladeleistung",
+            },
+            "_STRATEGY_LABELS": {
+                0: "Manuell",
+                1: "Zeitgesteuertes Aufladen",
+                2: "Plug and Play",
+            },
+            "_PHASE_LABELS": {1: "1-phasig", 2: "2-phasig", 3: "3-phasig"},
+        }
+        module = ast.fix_missing_locations(
+            ast.Module(body=[formatter, cls], type_ignores=[])
+        )
+        exec(compile(module, str(API_FILE.with_name("sensor.py")), "exec"), namespace)
+        status = SimpleNamespace(state="Wird gesendet", attributes={})
+        entity = namespace["AlphaESSLatestSettingsChangeSensor"](
+            SimpleNamespace(api=SimpleNamespace(write_status=status)), object()
+        )
+        self.assertEqual(entity.unique_key, "last_settings_change")
+        self.assertEqual(entity.native_value, "Noch keine Änderung")
+
+        status.attributes = {
+            "Gestartet um": "2026-10-11T10:00:00+00:00",
+            "Angefordert": {
+                "g2T.chargeCurrent": 10,
+                "g2T.chargeMode": 4,
+                "g2T.timePeriods.0.chargeCurrent": 12,
+            },
+        }
+        self.assertEqual(
+            entity.native_value,
+            "Ladestrom: 10 A; Lademodus: Kundenspezifische Ladeleistung; "
+            "Zeitrahmen 1 – Ladestrom: 12 A",
+        )
+        attrs = entity.extra_state_attributes
+        self.assertEqual(attrs["Änderungen"], [
+            "Ladestrom: 10 A",
+            "Lademodus: Kundenspezifische Ladeleistung",
+            "Zeitrahmen 1 – Ladestrom: 12 A",
+        ])
+        self.assertIn("nicht deren Übernahme", attrs["Hinweis"])
+        self.assertEqual(attrs["Gestartet um"], "2026-10-11T10:00:00+00:00")
+
     async def test_real_patch_method_tracks_http_success_rejection_and_timeout(self):
         for code, error, state in (
             (200, None, "API angenommen – Bestätigung ausstehend"),
