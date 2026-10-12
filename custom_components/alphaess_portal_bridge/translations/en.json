@@ -34,7 +34,7 @@
     "step": {
       "init": {
         "title": "Update interval",
-        "description": "Only multiples of 30 seconds from 30 to 300 seconds are allowed. Defaults: G1T 120 seconds, G2T 30 seconds.",
+        "description": "Whole seconds from 5 to 300 are allowed. Short intervals cause correspondingly frequent cloud requests and may be rate limited. Defaults: G1T 120 seconds, G2T 30 seconds.",
         "data": {
           "update_interval_seconds": "Refresh every (seconds)"
         }

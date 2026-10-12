@@ -1,5 +1,14 @@
 # Changelog
 
+## Fork 0.7.8 – 2026-10-12
+
+- Mindestintervall für Cloud-Aktualisierungen von 30 auf 5 Sekunden senken.
+  Ganze Sekunden von 5 bis 300 sind jetzt auswählbar.
+- Übersetzungen und Polling-Dokumentation aktualisieren; auf häufigere
+  Cloud-Abfragen und mögliche Drosselung hinweisen.
+- Regressionstests für den gesamten Intervallbereich und unveränderte
+  G1T-/G2T-Standardwerte ergänzt; insgesamt 74 Tests bestanden.
+
 ## Fork 0.7.7 – 2026-10-11
 
 - Lademodus 4 in Selectoren und Sensoren als „Benutzerdefinierte Ladeleistung“

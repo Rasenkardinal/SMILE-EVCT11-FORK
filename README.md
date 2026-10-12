@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.7 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.8 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -52,12 +52,12 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den bisherigen Änderungen bestehen insgesamt **72 automatisierte Tests**;
+  Mit den bisherigen Änderungen bestehen insgesamt **74 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.7.7** wird als GitHub-Release **`v0.7.7`** für HACS
-bereitgestellt. Sie bezeichnet Modus 4 jetzt als „Benutzerdefinierte
-Ladeleistung“.
+Die Fork-Version **0.7.8** wird als GitHub-Release **`v0.7.8`** für HACS
+bereitgestellt. Sie ermöglicht ein Cloud-Aktualisierungsintervall ab
+5 Sekunden; die bisherigen Profil-Standardwerte bleiben unverändert.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.
@@ -284,9 +284,14 @@ Bei unerwartetem Verhalten zuerst die AlphaESS-App oder das Portal prüfen. Die 
 
 ## Polling
 
-- Wallbox- und Konfigurationsdaten: Eingabefeld **30–300 Sekunden** in **30-Sekunden-Schritten**
+- Wallbox- und Konfigurationsdaten: Eingabefeld **5–300 Sekunden** in **1-Sekunden-Schritten**
 - Standard: **G1T 120 Sekunden**, **G2T 30 Sekunden**
 - Energiebericht: gecacht und höchstens etwa alle **5 Minuten** neu abgefragt
+- Sehr kurze Intervalle erhöhen die Anzahl der Cloud-Abfragen deutlich und
+  können vom Portal gedrosselt werden. Die Integration garantiert keine
+  bestimmte Antwortzeit oder erfolgreiche Abfrage bei 5-Sekunden-Polling.
+  Das 5-Sekunden-Intervall ist eine Nutzeroption, nicht die empfohlene
+  Standardeinstellung.
 
 Kurze Übergangszustände der Wallbox können zwischen zwei Abfragen liegen und in Home Assistant unsichtbar bleiben.
 
