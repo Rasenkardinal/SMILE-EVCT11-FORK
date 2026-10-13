@@ -33,18 +33,175 @@
   "options": {
     "step": {
       "init": {
-        "title": "Aktualisierungsintervall",
-        "description": "Ganze Sekunden von 5 bis 300 sind erlaubt. Kurze Intervalle verursachen entsprechend häufige Cloud-Abfragen und können zu Drosselung führen. Standard: G1T 120 Sekunden, G2T 30 Sekunden.",
+        "title": "Optionen",
+        "menu_options": {
+          "general": "Aktualisierungsintervall und Überwachungssensoren",
+          "control": "PV-Laderegelung (Modus 5)",
+          "vehicles": "Fahrzeugprofile"
+        }
+      },
+      "general": {
+        "title": "Aktualisierungsintervall und Überwachungssensoren",
+        "description": "Ganze Sekunden von 5 bis 300 sind erlaubt. Kurze Intervalle verursachen entsprechend häufige Cloud-Abfragen und können zu Drosselung führen. Standard: G1T 120 Sekunden, G2T 30 Sekunden. Wähle die lokalen Sensoren für die künftige PV-Ladeauswertung. Der Wallbox-Leistungssensor wird von dieser Integration bereitgestellt und muss nicht ausgewählt werden.",
         "data": {
-          "update_interval_seconds": "Aktualisierung alle (Sekunden)"
+          "update_interval_seconds": "Aktualisierung alle (Sekunden)",
+          "pv_power_entity": "PV-Leistungssensor",
+          "battery_soc_entity": "SOC-Sensor Hausakku",
+          "household_power_entity": "Hauslast-Sensor",
+          "grid_power_entity": "Sensor Netzbezug/Einspeisung",
+          "battery_power_entity": "Sensor Hausakku Laden/Entladen"
+        }
+      },
+      "control": {
+        "title": "PV-Laderegelung (Modus 5)",
+        "description": "Einstellungen für den geplanten HA-Lademodus 5. Die Regelung selbst ist noch nicht aktiv. Die Standardwerte beruhen auf dem Messzyklus vom 13.10.2026; Leistungsgrenzen und Hausakku-Werte sind vorläufige Vorschläge.",
+        "data": {
+          "active_vehicle_profile": "Aktives Fahrzeug",
+          "control_strategy": "Regelungsart",
+          "average_window_seconds": "Mittelungszeitraum",
+          "unstable_average_window_seconds": "Mittelungszeitraum für instabile Stufen",
+          "current_change_wait_seconds": "Wartezeit nach Stromänderung",
+          "phase_change_wait_seconds": "Wartezeit nach Phasenwechsel",
+          "grid_import_limit_w": "Zulässiger mittlerer Netzbezug",
+          "surplus_reserve_w": "Überschussreserve vor Erhöhung",
+          "min_battery_soc": "Mindest-SOC Hausakku",
+          "battery_soc_hysteresis": "SOC-Hysterese für Wiederanlauf",
+          "sensor_stale_seconds": "Sensor gilt als veraltet nach",
+          "sensor_recovery_seconds": "Gültige Sensorzeit vor Rückkehr"
+        },
+        "data_description": {
+          "control_strategy": "Stufenregelung ändert pro Entscheidung eine Stufe; Direktregelung springt auf die passende Stufe.",
+          "unstable_average_window_seconds": "Gilt, solange eine als instabil markierte Stufe aktiv ist, damit das Pendeln keine weiteren Wechsel auslöst.",
+          "current_change_wait_seconds": "Gemessen: Die Wallbox reagiert ca. 25–29 s nach dem Befehl.",
+          "phase_change_wait_seconds": "Gemessen: Die Ladung pausiert ca. 35–45 s nach dem Befehl für 10–15 s.",
+          "surplus_reserve_w": "Erhöhen nur, wenn der Überschuss die Mehrleistung der nächsten Stufe um diesen Wert übersteigt."
+        }
+      },
+      "vehicles": {
+        "title": "Fahrzeugprofile",
+        "menu_options": {
+          "vehicle_add": "Fahrzeug hinzufügen",
+          "vehicle_select": "Fahrzeug bearbeiten",
+          "vehicle_delete": "Fahrzeug löschen"
+        }
+      },
+      "vehicle_add": {
+        "title": "Fahrzeug hinzufügen",
+        "description": "Trage für jede Kombination aus Phasen und Ladestrom die stabile Ladeleistung nach dem Einpendeln ein. Instabile Stufen werden mit längerem Mittelungszeitraum genutzt; ausgeschlossene Stufen werden nie gewählt.",
+        "data": {
+          "name": "Fahrzeugname",
+          "unstable_stages": "Instabile Stufen",
+          "excluded_stages": "Ausgeschlossene Stufen"
+        },
+        "sections": {
+          "power_1p": {
+            "name": "Ladeleistung 1-phasig",
+            "data": {
+              "current_6": "6 A",
+              "current_7": "7 A",
+              "current_8": "8 A",
+              "current_9": "9 A",
+              "current_10": "10 A",
+              "current_11": "11 A",
+              "current_12": "12 A",
+              "current_13": "13 A",
+              "current_14": "14 A",
+              "current_15": "15 A"
+            }
+          },
+          "power_3p": {
+            "name": "Ladeleistung 3-phasig",
+            "data": {
+              "current_6": "6 A",
+              "current_7": "7 A",
+              "current_8": "8 A",
+              "current_9": "9 A",
+              "current_10": "10 A",
+              "current_11": "11 A",
+              "current_12": "12 A",
+              "current_13": "13 A",
+              "current_14": "14 A",
+              "current_15": "15 A"
+            }
+          }
+        }
+      },
+      "vehicle_edit": {
+        "title": "Fahrzeug bearbeiten",
+        "description": "Trage für jede Kombination aus Phasen und Ladestrom die stabile Ladeleistung nach dem Einpendeln ein. Instabile Stufen werden mit längerem Mittelungszeitraum genutzt; ausgeschlossene Stufen werden nie gewählt.",
+        "data": {
+          "name": "Fahrzeugname",
+          "unstable_stages": "Instabile Stufen",
+          "excluded_stages": "Ausgeschlossene Stufen"
+        },
+        "sections": {
+          "power_1p": {
+            "name": "Ladeleistung 1-phasig",
+            "data": {
+              "current_6": "6 A",
+              "current_7": "7 A",
+              "current_8": "8 A",
+              "current_9": "9 A",
+              "current_10": "10 A",
+              "current_11": "11 A",
+              "current_12": "12 A",
+              "current_13": "13 A",
+              "current_14": "14 A",
+              "current_15": "15 A"
+            }
+          },
+          "power_3p": {
+            "name": "Ladeleistung 3-phasig",
+            "data": {
+              "current_6": "6 A",
+              "current_7": "7 A",
+              "current_8": "8 A",
+              "current_9": "9 A",
+              "current_10": "10 A",
+              "current_11": "11 A",
+              "current_12": "12 A",
+              "current_13": "13 A",
+              "current_14": "14 A",
+              "current_15": "15 A"
+            }
+          }
+        }
+      },
+      "vehicle_select": {
+        "title": "Fahrzeug bearbeiten",
+        "data": {
+          "profile": "Fahrzeug"
+        }
+      },
+      "vehicle_delete": {
+        "title": "Fahrzeug löschen",
+        "data": {
+          "profile": "Fahrzeug"
         }
       }
+    },
+    "error": {
+      "name_required": "Bitte einen Fahrzeugnamen eingeben.",
+      "name_duplicate": "Ein Fahrzeug mit diesem Namen existiert bereits.",
+      "power_invalid": "Jede Ladeleistung muss größer als 0 W und im zulässigen Bereich sein.",
+      "power_not_increasing": "Die Ladeleistung darf mit steigendem Strom nicht sinken.",
+      "stage_conflict": "Eine Stufe kann nicht gleichzeitig instabil und ausgeschlossen sein.",
+      "no_usable_stage": "Mindestens eine Stufe muss nutzbar bleiben.",
+      "last_profile": "Das letzte Fahrzeugprofil kann nicht gelöscht werden."
     }
   },
   "entity": {
     "sensor": {
       "portal_profile": {
         "name": "Portal-Profil"
+      }
+    }
+  },
+  "selector": {
+    "control_strategy": {
+      "options": {
+        "step": "Stufenregelung (eine Stufe pro Entscheidung)",
+        "direct": "Direktregelung (passende Stufe direkt)"
       }
     }
   }

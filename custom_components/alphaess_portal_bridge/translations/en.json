@@ -33,6 +33,14 @@
   "options": {
     "step": {
       "init": {
+        "title": "Options",
+        "menu_options": {
+          "general": "Refresh interval and monitoring sensors",
+          "control": "PV charging control (mode 5)",
+          "vehicles": "Vehicle profiles"
+        }
+      },
+      "general": {
         "title": "Refresh interval and monitoring sensors",
         "description": "Whole seconds from 5 to 300 are allowed. Short intervals cause correspondingly frequent cloud requests and may be rate limited. Defaults: G1T 120 seconds, G2T 30 seconds. Select the local sensors for future PV charging analysis. The wallbox power sensor is provided by this integration and does not need selection.",
         "data": {
@@ -43,13 +51,157 @@
           "grid_power_entity": "Grid import/export power sensor",
           "battery_power_entity": "Home battery charge/discharge power sensor"
         }
+      },
+      "control": {
+        "title": "PV charging control (mode 5)",
+        "description": "Settings for the planned HA charging mode 5. The control itself is not active yet. Defaults are based on the measurement cycle of 2026-10-13; power limits and battery values are provisional proposals.",
+        "data": {
+          "active_vehicle_profile": "Active vehicle",
+          "control_strategy": "Control strategy",
+          "average_window_seconds": "Averaging period",
+          "unstable_average_window_seconds": "Averaging period for unstable stages",
+          "current_change_wait_seconds": "Wait after current change",
+          "phase_change_wait_seconds": "Wait after phase change",
+          "grid_import_limit_w": "Permitted average grid import",
+          "surplus_reserve_w": "Surplus reserve before increasing",
+          "min_battery_soc": "Minimum home battery SOC",
+          "battery_soc_hysteresis": "SOC hysteresis for restart",
+          "sensor_stale_seconds": "Sensor considered stale after",
+          "sensor_recovery_seconds": "Valid sensor time before resuming"
+        },
+        "data_description": {
+          "control_strategy": "Step control changes one stage per decision; direct control jumps to the matching stage.",
+          "unstable_average_window_seconds": "Used while a stage marked unstable is active, so that power oscillation does not trigger further changes.",
+          "current_change_wait_seconds": "Measured: the wallbox reacts about 25–29 s after the command.",
+          "phase_change_wait_seconds": "Measured: charging pauses about 35–45 s after the command for 10–15 s.",
+          "surplus_reserve_w": "Increase only if the surplus exceeds the additional power of the next stage by this amount."
+        }
+      },
+      "vehicles": {
+        "title": "Vehicle profiles",
+        "menu_options": {
+          "vehicle_add": "Add vehicle",
+          "vehicle_select": "Edit vehicle",
+          "vehicle_delete": "Delete vehicle"
+        }
+      },
+      "vehicle_add": {
+        "title": "Add vehicle",
+        "description": "Enter the stable charging power after settling for each phase/current combination. Unstable stages are used with a longer averaging period; excluded stages are never selected.",
+        "data": {
+          "name": "Vehicle name",
+          "unstable_stages": "Unstable stages",
+          "excluded_stages": "Excluded stages"
+        },
+        "sections": {
+          "power_1p": {
+            "name": "Single-phase charging power",
+            "data": {
+              "current_6": "6 A",
+              "current_7": "7 A",
+              "current_8": "8 A",
+              "current_9": "9 A",
+              "current_10": "10 A",
+              "current_11": "11 A",
+              "current_12": "12 A",
+              "current_13": "13 A",
+              "current_14": "14 A",
+              "current_15": "15 A"
+            }
+          },
+          "power_3p": {
+            "name": "Three-phase charging power",
+            "data": {
+              "current_6": "6 A",
+              "current_7": "7 A",
+              "current_8": "8 A",
+              "current_9": "9 A",
+              "current_10": "10 A",
+              "current_11": "11 A",
+              "current_12": "12 A",
+              "current_13": "13 A",
+              "current_14": "14 A",
+              "current_15": "15 A"
+            }
+          }
+        }
+      },
+      "vehicle_edit": {
+        "title": "Edit vehicle",
+        "description": "Enter the stable charging power after settling for each phase/current combination. Unstable stages are used with a longer averaging period; excluded stages are never selected.",
+        "data": {
+          "name": "Vehicle name",
+          "unstable_stages": "Unstable stages",
+          "excluded_stages": "Excluded stages"
+        },
+        "sections": {
+          "power_1p": {
+            "name": "Single-phase charging power",
+            "data": {
+              "current_6": "6 A",
+              "current_7": "7 A",
+              "current_8": "8 A",
+              "current_9": "9 A",
+              "current_10": "10 A",
+              "current_11": "11 A",
+              "current_12": "12 A",
+              "current_13": "13 A",
+              "current_14": "14 A",
+              "current_15": "15 A"
+            }
+          },
+          "power_3p": {
+            "name": "Three-phase charging power",
+            "data": {
+              "current_6": "6 A",
+              "current_7": "7 A",
+              "current_8": "8 A",
+              "current_9": "9 A",
+              "current_10": "10 A",
+              "current_11": "11 A",
+              "current_12": "12 A",
+              "current_13": "13 A",
+              "current_14": "14 A",
+              "current_15": "15 A"
+            }
+          }
+        }
+      },
+      "vehicle_select": {
+        "title": "Edit vehicle",
+        "data": {
+          "profile": "Vehicle"
+        }
+      },
+      "vehicle_delete": {
+        "title": "Delete vehicle",
+        "data": {
+          "profile": "Vehicle"
+        }
       }
+    },
+    "error": {
+      "name_required": "Please enter a vehicle name.",
+      "name_duplicate": "A vehicle with this name already exists.",
+      "power_invalid": "Every charging power must be greater than 0 W and within the allowed range.",
+      "power_not_increasing": "Charging power must not decrease with increasing current.",
+      "stage_conflict": "A stage cannot be unstable and excluded at the same time.",
+      "no_usable_stage": "At least one stage must remain usable.",
+      "last_profile": "The last vehicle profile cannot be deleted."
     }
   },
   "entity": {
     "sensor": {
       "portal_profile": {
         "name": "Portal profile"
+      }
+    }
+  },
+  "selector": {
+    "control_strategy": {
+      "options": {
+        "step": "Step control (one stage per decision)",
+        "direct": "Direct control (jump to matching stage)"
       }
     }
   }

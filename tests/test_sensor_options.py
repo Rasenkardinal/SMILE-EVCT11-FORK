@@ -33,7 +33,7 @@ class SensorOptionsTests(unittest.TestCase):
                 translations = json.loads(
                     (COMPONENT / filename).read_text(encoding="utf-8")
                 )
-                options = translations["options"]["step"]["init"]["data"]
+                options = translations["options"]["step"]["general"]["data"]
                 for name in SENSOR_OPTION_KEYS:
                     self.assertIn(CONSTANTS[name], options)
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## Fork 0.8.0 – 2026-10-13
+
+- Integrationsoptionen als Menü: Intervall und Sensoren, PV-Laderegelung
+  (Modus 5), Fahrzeugprofile.
+- Fahrzeugprofile hinzufügen, bearbeiten und löschen; je Profil stabile
+  Ladeleistungen für 1- und 3-phasig 6–15 A sowie instabile und
+  ausgeschlossene Stufen. Standardprofil mit den gemessenen Werten,
+  3-phasig 7 A als instabil markiert.
+- Regelungsparameter mit Standardwerten aus dem Messzyklus vom 13.10.2026
+  bzw. vorläufigen Vorschlägen speichern. Die Regelung selbst ist noch nicht
+  aktiv.
+- Fehlende deutsche Übersetzungen der Sensorauswahl ergänzt.
+- Messzyklus-Ergebnisse im Lastenheft dokumentiert; insgesamt 89
+  automatisierte Tests bestanden.
+
 ## Fork 0.7.9 – 2026-10-13
 
 - Sensor-Entitäten für PV-Leistung, Hausakku-SOC, Hauslast, Netzfluss und

@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.9 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.8.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -52,7 +52,7 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den bisherigen Änderungen bestehen insgesamt **77 automatisierte Tests**;
+  Mit den bisherigen Änderungen bestehen insgesamt **89 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
 Ab **0.7.9** können in den Integrationsoptionen Sensoren für PV-Leistung,
@@ -61,9 +61,17 @@ Der Wallbox-Leistungssensor ist bereits in der Integration enthalten. Die
 Auswahl speichert die Entity-IDs, implementiert aber noch keine automatische
 Aufzeichnung oder PV-Laderegelung.
 
-Die Fork-Version **0.7.9** wird als GitHub-Release **`v0.7.9`** für HACS
-bereitgestellt. Sie ergänzt die Auswahl der lokalen Überwachungssensoren in
-den Integrationsoptionen.
+Ab **0.8.0** sind die Integrationsoptionen sind
+als Menü aufgebaut. Neben Intervall und Sensoren gibt es die Bereiche
+**PV-Laderegelung (Modus 5)** mit vorbelegten Regelungsparametern und
+**Fahrzeugprofile** zum Hinzufügen, Bearbeiten und Löschen von Fahrzeugen mit
+eigener Ladeleistungstabelle (1-/3-phasig, 6–15 A) sowie instabilen und
+ausgeschlossenen Stufen. Die Werte werden nur gespeichert; die Regelung ist
+noch nicht implementiert. Details: `docs/modus-5-pv-eigenverbrauch-design.md`.
+
+Die Fork-Version **0.8.0** wird als GitHub-Release **`v0.8.0`** für HACS
+bereitgestellt. Sie ergänzt Fahrzeugprofile und vorbelegte Parameter für die
+geplante PV-Laderegelung (Modus 5) in den Integrationsoptionen.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.

@@ -113,6 +113,17 @@ des Sprungs 7 A → 8 A, wurden vom Nutzer als korrekt bestätigt. Die 16-A-
 Varianten wurden weggelassen, da die Wallbox nach Nutzerbeobachtung höchstens
 bis 15 A steuert.
 
+Die Tabellenwerte sind stabile Endwerte nach dem Einpendeln. Beim
+dreiphasigen Wechsel von 6 A auf 7 A oder 8 A schwankt die Ladeleistung
+zunächst stark, erkennbar an der Hauslast, und stabilisiert sich dann auf
+einem niedrigeren Wert. Vermutlich gibt die Wallbox mehr Leistung frei, als
+das Fahrzeug bzw. sein Bordladegerät übernimmt, und das Fahrzeug regelt
+herunter. Diese Ursache ist noch nicht bestätigt. Die Regelung muss daher mit
+den stabilen Endwerten rechnen und Messwerte während des Einschwingens nicht
+als Grundlage für weitere Stufenwechsel verwenden. Fahrzeugprofile sollen
+dafür eine Einschwingzeit erfassen und unzuverlässige Stufen ausschließen
+können.
+
 Mehrere Fahrzeugprofile mit jeweils eigener Tabelle sollen dauerhaft gepflegt
 werden können. Der Nutzer soll das aktive Profil über eine Fahrzeugauswahl
 wählen und Profile über die Home-Assistant-Optionsoberfläche hinzufügen,
@@ -133,6 +144,68 @@ zeitlich nachvollziehbar enthalten.
 
 Bis diese geeignete Aufzeichnung vorliegt, werden aus historischen Messdaten
 keine Regelparameter abgeleitet.
+
+### 3.5 Ergebnisse Messzyklus 13.10.2026
+
+Manueller Testzyklus 09:20–10:25 Uhr (Ortszeit, Rohdaten im Ordner
+`Messzyklus/`, Zeitstempel dort in UTC). Ausgewertet wurden 25
+Einstellungsänderungen aus dem Sensor „Letzte angeforderte Änderung“.
+
+Bestätigt:
+
+- **Aktualisierung:** Hauslast und Netzfluss ca. 1 s, Batterieleistung ca.
+  1–3 s, PV ca. 2–3 s, Hausakku-SOC nur in 0,4-%-Schritten.
+- **Energiebilanz und Vorzeichen:** PV + Netz + Batterie ≈ Hauslast
+  (Abweichung ca. 50–130 W). Netz positiv = Bezug, Batterie positiv =
+  Entladung. Die Hauslast enthält die Wallbox-Leistung.
+- **Befehlskette:** API angenommen nach ca. 2,5 s, Portalbestätigung nach
+  ca. 3–9 s.
+- **Reaktion der Wallbox:** Hauslast und Netzfluss erreichen 50 % der
+  Änderung reproduzierbar **25–29 s** nach dem Befehl (Lademodusstart: ca.
+  43 s, Phasenwechsel 1→3: ca. 37 s).
+- **Reihenfolge:** Hauslast und Netzfluss reagieren gleichzeitig. Die
+  Batterie folgt ca. 5–15 s später und gleicht den Netzfluss dann auf ca.
+  0 ± 100 W aus. Bis dahin zeigt der Netzfluss kurzzeitige Spitzen bis ca.
+  2 kW. Danach regelt die Batterie noch über Minuten langsam nach.
+- **Folge für die Regelgröße:** Solange der Hausakku freigegeben ist, bleibt
+  der Netzfluss nahe 0 W und zeigt kaum, ob PV-Überschuss oder Defizit
+  besteht. Das Defizit erscheint in der Batterieleistung. Eine geeignete
+  Regelgröße ist die Bilanz PV − Hauslast (bzw. Netz + Batterie); der Netzfluss
+  allein ist nur bei gesperrtem Hausakku aussagekräftig.
+- **Phasenwechsel:** Die Ladung fällt ca. 35–45 s nach dem Befehl für nur
+  ca. 10–15 s auf die Grundlast ab und läuft dann in der neuen Stufe weiter.
+- **Cloud-Werte:** Die Wallbox-Leistung wird fest ca. alle 73 s aktualisiert
+  (effektive Verzögerung 0–73 s zusätzlich zur Wallbox-Reaktion). Der
+  Wallbox-Status ändert sich erst ca. 33–46 s nach dem Befehl. Beide Werte
+  sind für die Regelung zu langsam und nur zur Plausibilisierung geeignet.
+- **1-phasige Stufen:** Die Schritte von ca. 230 W liegen im Bereich der
+  normalen Lastschwankung und sind in der Hauslast kaum einzeln erkennbar.
+- **3-phasig 7 A instabil:** Die Leistung pendelt zwischen ca. 3,4 kW und
+  ca. 5,2–5,5 kW. Beim ersten Durchgang beruhigte sie sich nach ca. 5 min
+  auf ca. 3,4 kW (mit vereinzelten Spitzen). Beim zweiten Durchgang mit
+  gesperrtem Hausakku pendelte sie über die gesamten ca. 8 min. Andere
+  3-phasige Stufen (6, 8, 9, 16 A) waren nach ca. 25–55 s stabil.
+- **Hausakku-Sperre:** Batterieleistung 0 W von ca. 10:08 bis 10:21 Uhr.
+  Bei 3-phasig 6 A und 7 A wurden dabei ca. 1,4–1,6 kW eingespeist; die
+  Schwankungen der 7-A-Stufe gingen ungedämpft ins Netz (ca. −1,6 bis
+  +0,7 kW).
+
+Folgerungen für den Entwurf:
+
+- Nach einem Befehl mindestens ca. 45–60 s warten, bevor die Reaktion
+  bewertet wird; nach einem Phasenwechsel ca. 60–90 s.
+- 3-phasig 7 A wird vorerst **zugelassen** (Nutzerentscheidung), da sie die
+  einzige dreiphasige Stufe zwischen 6 A und 8 A ist und einphasiges Laden
+  verlustreicher ist. Das Fahrzeugprofil kennzeichnet sie als **instabile
+  Stufe**. Solange eine instabile Stufe aktiv ist, wertet die Regelung einen
+  längeren Mittelwert aus (Zeitraum konfigurierbar; Messdaten legen
+  mindestens ca. 3–5 min nahe) und trifft in dieser Zeit keine
+  Folgeentscheidung aufgrund einzelner Leistungsspitzen. Der SOC-Schutz und
+  die Netzbezugsgrenze bleiben davon unberührt. Das Ausschließen einer
+  Stufe bleibt als Profiloption für spätere Fahrzeuge möglich.
+- Die Auswertung der Bilanz bzw. Batterieleistung ist bei freigegebenem
+  Hausakku der Netzfluss-Auswertung vorzuziehen. Abschnitt 4.1 ist
+  entsprechend zu überarbeiten.
 
 ## 4. Regelungsentwurf
 
@@ -178,6 +251,19 @@ Phasenwechsel sind die Ladepause und die verzögerte Cloud-Rückmeldung zu
 berücksichtigen. Die Betriebsart soll keine schnellen Folgekommandos senden,
 während ein vorheriger Wechsel wahrscheinlich noch läuft.
 
+**Phasenwahl und Ladeverluste:** Einphasiges Laden ist nach Nutzerangabe
+deutlich verlustreicher als dreiphasiges. Eine einphasige Stufe ist deshalb
+kein gleichwertiger Ersatz für eine dreiphasige Stufe mit ähnlicher
+Leistung (z. B. 1-phasig 15 A ≈ 3,40 kW statt 3-phasig 7 A ≈ 3,44 kW).
+Die Regelung soll dreiphasiges Laden bevorzugen, sobald der Überschuss für
+die kleinste stabile dreiphasige Stufe reicht. Einphasig soll sie nur laden,
+wenn die dreiphasige Mindeststufe nicht erreicht wird. Liegt der Überschuss
+zwischen zwei dreiphasigen Stufen, ist die niedrigere dreiphasige Stufe
+einer leistungsgleichen einphasigen Stufe vorzuziehen; der Rest bleibt für
+den Hausakku. Die Verluste wurden bisher nicht gemessen (die Messwerte sind
+wallboxseitige AC-Leistungen). Ob das Fahrzeugprofil einen Wirkungsgrad oder
+eine Phasenpräferenz je Stufe erhält, ist noch festzulegen.
+
 ### 4.3 Hausakku-Mindest-SOC
 
 - Mindest-SOC ist einstellbar.
@@ -195,7 +281,29 @@ wird, sind noch festzulegen. Insbesondere muss geprüft werden, wie ein
 Ladestopp in der bestehenden Integration zuverlässig und ohne Verwechslung mit
 „Fahrzeug getrennt“ ausgelöst werden kann.
 
-### 4.4 Sensorfehler und Rückkehr aus dem Fallback
+### 4.4 Optionale Hausakku-Sperre per Dispatch-Mode
+
+Zusätzlich besteht die Möglichkeit, den Hausakku über den Dispatch-Mode zu
+sperren. In diesem Fall soll die Regelung ausschließlich PV-Leistung und
+Netzfluss berücksichtigen; der Hausakku unterstützt die Fahrzeugladung dann
+nicht. Der Nutzer kann den Hausakku bereits manuell sperren und hat dies im
+letzten Teil des aktuellen Testzyklus getan. Dieser Abschnitt ist in den
+Sensorverläufen an einer Nulllinie des Batterieleistungssensors erkennbar.
+
+Die Auswertung soll die Phasen mit und ohne Hausakku-Sperre getrennt
+betrachten, insbesondere hinsichtlich Netzfluss-Schwankungen,
+Stabilisierungszeit und Eignung von Hauslast und Netzfluss als Regelgrößen.
+
+Nachteil: Die Sperre verhindert nicht nur die Entladung, sondern auch die
+Ladung des Hausakkus. PV-Überschuss, den das Fahrzeug nicht aufnimmt, wird
+dann eingespeist statt im Hausakku gespeichert. Die Sperre ist deshalb
+vorerst nur eine im Hinterkopf behaltene Option und kein Bestandteil der
+geplanten Standardregelung.
+
+Ob und wie Modus 5 die Sperre automatisch per Dispatch-Mode setzt und wieder
+aufhebt, ist noch festzulegen.
+
+### 4.5 Sensorfehler und Rückkehr aus dem Fallback
 
 - Ein benötigter Sensor ist fehlerhaft, wenn er fehlt, `unknown` oder
   `unavailable` ist oder länger als **10 Sekunden** keinen neuen Messwert
@@ -242,6 +350,45 @@ ungeeignet.
 10. Optionsänderungen müssen ohne Verlust bestehender Zugangsdaten oder
     Konfigurationsdaten migrierbar sein.
 
+### 5.1 Umgesetzte Konfiguration
+
+Die Integrationsoptionen sind als Menü aufgebaut:
+
+- **Aktualisierungsintervall und Überwachungssensoren:** wie bisher.
+- **PV-Laderegelung (Modus 5):** aktives Fahrzeug, Regelungsart und
+  Parameter. Die Regelung selbst ist noch nicht implementiert; die Werte
+  werden nur gespeichert.
+- **Fahrzeugprofile:** Fahrzeug hinzufügen, bearbeiten, löschen. Jedes Profil
+  hat einen Namen, je einen aufklappbaren Bereich „1-phasig“ und „3-phasig“
+  mit den stabilen Leistungen für 6–15 A sowie Mehrfachauswahlen für
+  instabile und ausgeschlossene Stufen. Ohne gespeicherte Profile gilt das
+  „Standardfahrzeug“ mit den Messwerten aus Abschnitt 3.3 und 3-phasig 7 A als
+  instabile Stufe. Das letzte Profil kann nicht gelöscht werden.
+
+Validierung: Name erforderlich und eindeutig, Leistungen größer 0 W
+(höchstens 4.000 W einphasig bzw. 12.000 W dreiphasig) und mit steigendem
+Strom nicht fallend, keine Stufe zugleich instabil und ausgeschlossen,
+mindestens eine nutzbare Stufe.
+
+Standardwerte der Regelungsparameter:
+
+| Parameter | Standard | Bereich | Herkunft |
+|---|---:|---:|---|
+| Regelungsart | Stufenregelung | Stufe/Direkt | Nutzerentscheidung |
+| Mittelungszeitraum | 120 s | 30–900 s | Nutzerentscheidung |
+| Mittelungszeitraum instabile Stufen | 240 s | 60–1.800 s | Messzyklus (3–5 min) |
+| Wartezeit nach Stromänderung | 60 s | 30–600 s | Messzyklus (Reaktion 25–29 s + Einschwingen) |
+| Wartezeit nach Phasenwechsel | 90 s | 30–600 s | Messzyklus (Pause 35–45 s + 10–15 s) |
+| Zulässiger mittlerer Netzbezug | 200 W | 0–5.000 W | vorläufiger Vorschlag |
+| Überschussreserve vor Erhöhung | 200 W | 0–3.000 W | vorläufiger Vorschlag |
+| Mindest-SOC Hausakku | 20 % | 0–100 % | vorläufiger Vorschlag |
+| SOC-Hysterese für Wiederanlauf | 5 % | 1–50 % | vorläufiger Vorschlag |
+| Sensor gilt als veraltet nach | 10 s | 5–120 s | Nutzerentscheidung |
+| Gültige Sensorzeit vor Rückkehr | 30 s | 10–600 s | Nutzerentscheidung |
+
+Die Überschussreserve bedeutet: erhöhen nur, wenn der Überschuss die
+Mehrleistung der nächsten Stufe um diesen Wert übersteigt.
+
 ## 6. Offene Punkte vor Implementierungsbeginn
 
 Die folgenden Details sind noch nicht festgelegt:
@@ -263,6 +410,9 @@ Die folgenden Details sind noch nicht festgelegt:
   Zu prüfen ist, ob Modus 1 auf dem konkreten AlphaESS-System tatsächlich die
   gewünschte klassische Überschussregelung startet und wie sich das mit den
   übrigen AlphaESS-Strategie-/Zeitfenstereinstellungen verträgt.
+- Ob Modus 5 den Hausakku per Dispatch-Mode automatisch sperren soll, unter
+  welchen Bedingungen die Sperre gesetzt und aufgehoben wird und wie sie sich
+  mit SOC-Schutz und Fallback verträgt.
 - Verhalten bei manuellem Moduswechsel, Neustart von Home Assistant,
   Fahrzeugwechsel während des Ladens und externen Änderungen über App/Portal.
 - Verifikation, wie die ausgewählte API-Current-Einstellung mit dem
