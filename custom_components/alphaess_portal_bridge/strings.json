@@ -9,6 +9,12 @@
           "password": "Password",
           "system_serial": "System serial number",
           "wallbox_serial": "Wallbox serial number (optional)"
+        },
+        "data_description": {
+          "username": "Username or email address for the AlphaESS portal (cloud.alphaess.com).",
+          "password": "Password for your AlphaESS portal account.",
+          "system_serial": "Serial number of your storage system (e.g. AL... on the nameplate).",
+          "wallbox_serial": "Serial number of the wallbox (starts with ALP...). Leave empty for auto-detection."
         }
       },
       "reconfigure": {
@@ -16,6 +22,9 @@
         "description": "Enter the wallbox serial number. It starts with ALP.",
         "data": {
           "wallbox_serial": "Wallbox serial number"
+        },
+        "data_description": {
+          "wallbox_serial": "Serial number of the wallbox (starts with ALP...)."
         }
       }
     },
@@ -38,7 +47,8 @@
           "general": "Refresh interval and monitoring sensors",
           "control": "PV charging control (mode 5)",
           "vehicles": "Vehicle profiles"
-        }
+        },
+        "description": "Select an area to configure:\n• Refresh interval and monitoring sensors for PV analysis\n• PV charging control (mode 5): thresholds, wait times and protection rules\n• Vehicle profiles: measured charging power curves"
       },
       "general": {
         "title": "Refresh interval and monitoring sensors",
@@ -104,7 +114,8 @@
           "vehicle_add": "Add vehicle",
           "vehicle_select": "Edit vehicle",
           "vehicle_delete": "Delete vehicle"
-        }
+        },
+        "description": "Manage vehicle profiles: add new vehicles, edit existing profiles or delete unused ones."
       },
       "vehicle_add": {
         "title": "Add vehicle",
@@ -128,7 +139,8 @@
               "current_13": "13 A",
               "current_14": "14 A",
               "current_15": "15 A"
-            }
+            },
+            "description": "Measured stable charging power in watts for single-phase charging (e.g. 6 A ≈ 1380 W, 10 A ≈ 2300 W, 16 A ≈ 3680 W)."
           },
           "power_3p": {
             "name": "Three-phase charging power",
@@ -143,7 +155,8 @@
               "current_13": "13 A",
               "current_14": "14 A",
               "current_15": "15 A"
-            }
+            },
+            "description": "Measured stable charging power in watts for three-phase charging (e.g. 6 A ≈ 4140 W, 10 A ≈ 6900 W, 16 A ≈ 11040 W)."
           }
         },
         "data_description": {
@@ -174,7 +187,8 @@
               "current_13": "13 A",
               "current_14": "14 A",
               "current_15": "15 A"
-            }
+            },
+            "description": "Measured stable charging power in watts for single-phase charging (e.g. 6 A ≈ 1380 W, 10 A ≈ 2300 W, 16 A ≈ 3680 W)."
           },
           "power_3p": {
             "name": "Three-phase charging power",
@@ -189,7 +203,8 @@
               "current_13": "13 A",
               "current_14": "14 A",
               "current_15": "15 A"
-            }
+            },
+            "description": "Measured stable charging power in watts for three-phase charging (e.g. 6 A ≈ 4140 W, 10 A ≈ 6900 W, 16 A ≈ 11040 W)."
           }
         },
         "data_description": {
@@ -202,12 +217,20 @@
         "title": "Edit vehicle",
         "data": {
           "profile": "Vehicle"
+        },
+        "description": "Select the vehicle profile whose measured charging powers and stages you want to edit.",
+        "data_description": {
+          "profile": "Vehicle profile to edit. Example: Standard vehicle."
         }
       },
       "vehicle_delete": {
         "title": "Delete vehicle",
         "data": {
           "profile": "Vehicle"
+        },
+        "description": "Select the vehicle profile you want to delete. The currently active vehicle or the last remaining profile cannot be deleted.",
+        "data_description": {
+          "profile": "Vehicle profile to delete."
         }
       }
     },

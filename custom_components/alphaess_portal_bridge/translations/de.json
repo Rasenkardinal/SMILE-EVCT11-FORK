@@ -9,6 +9,12 @@
           "password": "Kennwort",
           "system_serial": "Anlagen-Seriennummer",
           "wallbox_serial": "Wallbox-Seriennummer (optional)"
+        },
+        "data_description": {
+          "username": "Benutzername oder E-Mail-Adresse für das AlphaESS-Portal (cloud.alphaess.com).",
+          "password": "Passwort für deinen AlphaESS-Portalzugang.",
+          "system_serial": "Seriennummer deines Speichersystems (z. B. AL... auf dem Typenschild).",
+          "wallbox_serial": "Seriennummer der Wallbox (beginnt mit ALP...). Frei lassen, wenn sie automatisch erkannt werden soll."
         }
       },
       "reconfigure": {
@@ -16,6 +22,9 @@
         "description": "Gib die Seriennummer der Wallbox ein. Sie beginnt mit ALP.",
         "data": {
           "wallbox_serial": "Wallbox-Seriennummer"
+        },
+        "data_description": {
+          "wallbox_serial": "Seriennummer der Wallbox (beginnt mit ALP...)."
         }
       }
     },
@@ -38,7 +47,8 @@
           "general": "Aktualisierungsintervall und Überwachungssensoren",
           "control": "PV-Laderegelung (Modus 5)",
           "vehicles": "Fahrzeugprofile"
-        }
+        },
+        "description": "Wähle einen Bereich zur Konfiguration aus:\n• Aktualisierungsintervall und Sensoren für die PV-Auswertung\n• PV-Laderegelung (Modus 5): Schwellen, Wartezeiten und Schutzregeln\n• Fahrzeugprofile: gemessene Ladeleistungen deines Fahrzeugs"
       },
       "general": {
         "title": "Aktualisierungsintervall und Überwachungssensoren",
@@ -104,7 +114,8 @@
           "vehicle_add": "Fahrzeug hinzufügen",
           "vehicle_select": "Fahrzeug bearbeiten",
           "vehicle_delete": "Fahrzeug löschen"
-        }
+        },
+        "description": "Fahrzeugprofile verwalten: Neue Fahrzeuge anlegen, vorhandene Profile anpassen oder nicht mehr benötigte Fahrzeuge löschen."
       },
       "vehicle_add": {
         "title": "Fahrzeug hinzufügen",
@@ -128,7 +139,8 @@
               "current_13": "13 A",
               "current_14": "14 A",
               "current_15": "15 A"
-            }
+            },
+            "description": "Gemessene stabile Ladeleistung in Watt bei 1-phasigem Laden (z. B. 6 A ≈ 1.380 W, 10 A ≈ 2.300 W, 16 A ≈ 3.680 W)."
           },
           "power_3p": {
             "name": "Ladeleistung 3-phasig",
@@ -143,7 +155,8 @@
               "current_13": "13 A",
               "current_14": "14 A",
               "current_15": "15 A"
-            }
+            },
+            "description": "Gemessene stabile Ladeleistung in Watt bei 3-phasigem Laden (z. B. 6 A ≈ 4.140 W, 10 A ≈ 6.900 W, 16 A ≈ 11.040 W)."
           }
         },
         "data_description": {
@@ -174,7 +187,8 @@
               "current_13": "13 A",
               "current_14": "14 A",
               "current_15": "15 A"
-            }
+            },
+            "description": "Gemessene stabile Ladeleistung in Watt bei 1-phasigem Laden (z. B. 6 A ≈ 1.380 W, 10 A ≈ 2.300 W, 16 A ≈ 3.680 W)."
           },
           "power_3p": {
             "name": "Ladeleistung 3-phasig",
@@ -189,7 +203,8 @@
               "current_13": "13 A",
               "current_14": "14 A",
               "current_15": "15 A"
-            }
+            },
+            "description": "Gemessene stabile Ladeleistung in Watt bei 3-phasigem Laden (z. B. 6 A ≈ 4.140 W, 10 A ≈ 6.900 W, 16 A ≈ 11.040 W)."
           }
         },
         "data_description": {
@@ -202,12 +217,20 @@
         "title": "Fahrzeug bearbeiten",
         "data": {
           "profile": "Fahrzeug"
+        },
+        "description": "Wähle das Fahrzeugprofil aus, dessen gemessene Ladeleistungen und Stufen du bearbeiten möchtest.",
+        "data_description": {
+          "profile": "Zu bearbeitendes Fahrzeugprofil. Beispiel: Standardfahrzeug."
         }
       },
       "vehicle_delete": {
         "title": "Fahrzeug löschen",
         "data": {
           "profile": "Fahrzeug"
+        },
+        "description": "Wähle das Fahrzeugprofil aus, das gelöscht werden soll. Das aktuell aktive Fahrzeug oder das letzte Profil kann nicht gelöscht werden.",
+        "data_description": {
+          "profile": "Zu löschendes Fahrzeugprofil."
         }
       }
     },

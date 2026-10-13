@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.11.3 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.11.4 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -94,8 +94,8 @@ Netzbezugsschutz greift erst oberhalb dieses Werts plus Toleranz. Ab
 **0.11.0** lässt sich der Wert zusätzlich über den Slider „Zulässiges Defizit“
 (0–5.000 W) einstellen; er wirkt sofort ohne Neuladen der Integration.
 
-Die Fork-Version **0.11.3** wird als GitHub-Release **`v0.11.3`** für HACS
-bereitgestellt. Sie ergänzt umfassende Hilfetexte mit Beispielen für alle Optionen; insgesamt
+Die Fork-Version **0.11.4** wird als GitHub-Release **`v0.11.4`** für HACS
+bereitgestellt. Sie korrigiert die Dokumentationsverlinkung auf das Fork-Repository und ergänzt alle restlichen Menü- und Feldhilfetexte; insgesamt
 bestehen **119 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## Fork 0.11.4 – 2026-10-13
+
+- Dokumentations-Verlinkung (Fragezeichen im HA-Menü) und Issue-Tracker in
+  `manifest.json` auf das Fork-Repository `Rasenkardinal/SMILE-EVCT11-FORK`
+  umgebogen.
+- Hilfetexte für alle verbleibenden Menüs und Dialogschritte ergänzt:
+  Hauptmenü `init`, Untermenü `vehicles`, Profilauswahl/Löschen,
+  1- und 3-Phasen-Leistungsbereiche sowie Portal-Zugangsdaten (Deutsch und Englisch).
+
 ## Fork 0.11.3 – 2026-10-13
 
 - Konfigurations- und Optionsdialoge: Hilfetexte (`data_description`) für

@@ -1,15 +1,16 @@
 {
   "domain": "alphaess_portal_bridge",
   "name": "AlphaESS Wallbox Bridge",
-  "documentation": "https://github.com/wfa001/SMILE-EVCT11",
-  "issue_tracker": "https://github.com/wfa001/SMILE-EVCT11/issues",
+  "documentation": "https://github.com/Rasenkardinal/SMILE-EVCT11-FORK",
+  "issue_tracker": "https://github.com/Rasenkardinal/SMILE-EVCT11-FORK/issues",
   "codeowners": [
+    "@Rasenkardinal",
     "@wfa001"
   ],
   "config_flow": true,
   "integration_type": "hub",
   "iot_class": "cloud_polling",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "loggers": [
     "custom_components.alphaess_portal_bridge"
   ]
