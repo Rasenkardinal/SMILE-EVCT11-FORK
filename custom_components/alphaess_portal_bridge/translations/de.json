@@ -72,13 +72,20 @@
           "sensor_recovery_seconds": "Gültige Sensorzeit vor Rückkehr"
         },
         "data_description": {
-          "control_strategy": "Stufenregelung ändert pro Entscheidung eine Stufe; Direktregelung springt auf die passende Stufe.",
-          "unstable_average_window_seconds": "Gilt, solange eine als instabil markierte Stufe aktiv ist, damit das Pendeln keine weiteren Wechsel auslöst.",
-          "current_change_wait_seconds": "Gemessen: Die Wallbox reagiert ca. 25–29 s nach dem Befehl.",
-          "phase_change_wait_seconds": "Gemessen: Die Ladung pausiert ca. 35–45 s nach dem Befehl für 10–15 s.",
-          "surplus_reserve_w": "Erhöhen nur, wenn der Überschuss die Mehrleistung der nächsten Stufe um diesen Wert übersteigt.",
-          "grid_import_protection_seconds": "Liegt der mittlere Netzbezug so lange über der Grenze, wird sofort gesenkt, ohne den vollen Mittelungszeitraum abzuwarten. Höchstens so lang wie der Mittelungszeitraum.",
-          "reaction_confirm_seconds": "Liegt die Hauslast nach einem Befehl so lange stabil im Bereich der erwarteten neuen Last, endet die Wartezeit vorzeitig. Ändern andere Verbraucher die Last, gilt die volle Wartezeit. 0 = aus."
+          "active_vehicle_profile": "Fahrzeugprofil mit den Ladestufen (Phasen, Strom, Leistung), aus denen die Regelung wählt.",
+          "control_strategy": "Stufenregelung ändert pro Entscheidung eine Stufe (ruhiger); Direktregelung springt sofort auf die passende Stufe (schneller). Wirkt beim Erhöhen und Senken.",
+          "average_window_seconds": "Über diesen Zeitraum werden PV, Hauslast und Netzbezug gemittelt; erst danach wird regulär entschieden. Wirkt beim Erhöhen und Senken. Länger = ruhiger, aber träger.",
+          "unstable_average_window_seconds": "Gilt, solange eine als instabil markierte Stufe aktiv ist, damit das Pendeln keine weiteren Wechsel auslöst. Wirkt beim Erhöhen und Senken.",
+          "current_change_wait_seconds": "Pause nach einer Stromänderung oder einem fehlgeschlagenen Befehl, bevor neu gemittelt wird. Gemessen: Die Wallbox reagiert ca. 25–29 s nach dem Befehl. Wirkt in beide Richtungen.",
+          "phase_change_wait_seconds": "Pause nach einem Phasenwechsel oder Wechsel von/zu Modus 1. Gemessen: Die Ladung pausiert ca. 35–45 s nach dem Befehl für 10–15 s. Wirkt in beide Richtungen.",
+          "grid_import_limit_w": "Nur beim Senken: Ab diesem mittleren Netzbezug greift der Netzbezugsschutz. Höher = mehr Netzbezug wird toleriert, bevor gesenkt wird.",
+          "grid_import_protection_seconds": "Nur beim Senken: Liegt der mittlere Netzbezug so lange über der Grenze, wird sofort gesenkt, ohne den vollen Mittelungszeitraum abzuwarten. Länger = träger. Höchstens so lang wie der Mittelungszeitraum.",
+          "reaction_confirm_seconds": "Liegt die Hauslast nach einem Befehl so lange stabil im Bereich der erwarteten neuen Last, endet die Wartezeit vorzeitig. Ändern andere Verbraucher die Last, gilt die volle Wartezeit. 0 = aus.",
+          "surplus_reserve_w": "Nur beim Erhöhen: Erhöht wird nur, wenn der mittlere Überschuss die Leistung der nächsten Stufe um mindestens diesen Wert übersteigt. Höher = weniger Pendeln und Netzbezug, aber mehr Einspeisung.",
+          "min_battery_soc": "Unter diesem Ladestand des Hausakkus stellt die Regelung die Wallbox auf Modus 1 (eigene Überschussladung der Wallbox).",
+          "battery_soc_hysteresis": "Nach dem SOC-Schutz wird erst wieder geregelt, wenn der Hausakku den Mindest-SOC um diesen Wert übersteigt.",
+          "sensor_stale_seconds": "Liefert ein Sensor so lange keinen neuen Wert, gilt die Messung als ungültig und die Wallbox wird als Fallback auf Modus 1 gestellt.",
+          "sensor_recovery_seconds": "So lange müssen alle Sensoren wieder gültig sein, bevor die Regelung nach einem Sensorfehler weitermacht."
         }
       },
       "vehicles": {

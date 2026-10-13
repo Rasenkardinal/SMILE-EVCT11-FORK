@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.9.1 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.9.2 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -82,8 +82,12 @@ Hauslast die erwartete neue Last stabil erreicht hat (Bestätigungszeit
 einstellbar, Standard 10 s, 0 = aus). Ändern andere Verbraucher die Hauslast,
 gilt die volle Wartezeit.
 
-Die Fork-Version **0.9.1** wird als GitHub-Release **`v0.9.1`** für HACS
-bereitgestellt. Sie ergänzt die Reaktionserkennung für Modus 5; insgesamt
+Ab **0.9.2** zeigt jede Option der PV-Laderegelung einen Hilfetext, der die
+Wirkung erklärt und angibt, ob sie nur beim Erhöhen, nur beim Senken oder in
+beide Richtungen wirkt.
+
+Die Fork-Version **0.9.2** wird als GitHub-Release **`v0.9.2`** für HACS
+bereitgestellt. Sie ergänzt Hilfetexte zu allen Regelungsoptionen; insgesamt
 bestehen **116 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 

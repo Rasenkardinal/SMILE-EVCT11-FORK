@@ -1,5 +1,11 @@
 # Changelog
 
+## Fork 0.9.2 – 2026-10-13
+
+- Optionen „PV-Laderegelung (Modus 5)“: Hilfetexte für alle 14 Parameter mit
+  Wirkrichtung (nur Erhöhen, nur Senken oder beide) und Auswirkung beim
+  Verstellen (Deutsch und Englisch).
+
 ## Fork 0.9.1 – 2026-10-13
 
 - Modus 5: Die Wartezeit nach einem Befehl endet vorzeitig, sobald die
