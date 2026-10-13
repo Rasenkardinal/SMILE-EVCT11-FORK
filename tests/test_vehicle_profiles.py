@@ -14,8 +14,8 @@ CONSTANTS = runpy.run_path(str(COMPONENT / "const.py"))
 PROFILES = runpy.run_path(str(COMPONENT / "vehicle_profiles.py"))
 TRANSLATION_FILES = ("strings.json", "translations/en.json", "translations/de.json")
 
-MEASURED_1P = [1420, 1640, 1840, 2075, 2250, 2480, 2720, 2960, 3170, 3400]
-MEASURED_3P = [2990, 3440, 5540, 6260, 6960, 7550, 8280, 9000, 9650, 10350]
+MEASURED_1P = [1380, 1610, 1840, 2070, 2300, 2530, 2760, 2990, 3220, 3450]
+MEASURED_3P = [4140, 4830, 5520, 6210, 6900, 7590, 8280, 8970, 9660, 10350]
 
 
 def profile(**changes):
@@ -25,15 +25,15 @@ def profile(**changes):
 
 
 class VehicleProfileTests(unittest.TestCase):
-    def test_default_profile_uses_stable_measured_values(self):
+    def test_default_profile_uses_nominal_calculated_values(self):
         default = PROFILES["DEFAULT_VEHICLE_PROFILE"]
         currents = [str(a) for a in range(6, 16)]
         self.assertEqual([default["power_1p"][a] for a in currents], MEASURED_1P)
         self.assertEqual([default["power_3p"][a] for a in currents], MEASURED_3P)
 
-    def test_three_phase_seven_amps_is_allowed_but_unstable(self):
+    def test_default_profile_has_no_unstable_or_excluded_stages(self):
         default = PROFILES["DEFAULT_VEHICLE_PROFILE"]
-        self.assertEqual(default["unstable_stages"], ["3_7"])
+        self.assertEqual(default["unstable_stages"], [])
         self.assertEqual(default["excluded_stages"], [])
 
     def test_default_profile_is_valid(self):
@@ -47,7 +47,7 @@ class VehicleProfileTests(unittest.TestCase):
             "name_duplicate": (profile(), ("standardfahrzeug",)),
             "power_invalid": (profile(power_1p={**profile()["power_1p"], "6": 0}), ()),
             "power_not_increasing": (profile(power_3p=power_3p), ()),
-            "stage_conflict": (profile(excluded_stages=["3_7"]), ()),
+            "stage_conflict": (profile(unstable_stages=["3_7"], excluded_stages=["3_7"]), ()),
             "no_usable_stage": (
                 profile(unstable_stages=[], excluded_stages=list(PROFILES["STAGE_KEYS"])),
                 (),
@@ -77,7 +77,7 @@ class VehicleProfileTests(unittest.TestCase):
         profiles = get_profiles({}, "vehicle_profiles")
         self.assertEqual(list(profiles), [PROFILES["DEFAULT_VEHICLE_PROFILE_ID"]])
         profiles["standard"]["power_3p"]["7"] = 1
-        self.assertEqual(PROFILES["DEFAULT_VEHICLE_PROFILE"]["power_3p"]["7"], 3440)
+        self.assertEqual(PROFILES["DEFAULT_VEHICLE_PROFILE"]["power_3p"]["7"], 4830)
         saved = {"abc": profile(name="Saved")}
         self.assertEqual(get_profiles({"vehicle_profiles": saved}, "vehicle_profiles"), saved)
 
@@ -93,8 +93,12 @@ class ControlSettingTests(unittest.TestCase):
         settings = CONSTANTS["CONTROL_NUMBER_SETTINGS"]
         self.assertEqual(settings["average_window_seconds"][0], 120)
         self.assertEqual(settings["unstable_average_window_seconds"][0], 240)
-        self.assertEqual(settings["current_change_wait_seconds"][0], 60)
+        self.assertEqual(settings["current_change_wait_seconds"][0], 40)
         self.assertEqual(settings["phase_change_wait_seconds"][0], 90)
+        self.assertEqual(settings["allowed_grid_import_w"][0], 200)
+        self.assertEqual(settings["grid_import_limit_w"][0], 500)
+        self.assertEqual(settings["grid_import_protection_seconds"][0], 50)
+        self.assertEqual(settings["surplus_reserve_w"][0], 50)
         self.assertEqual(settings["sensor_stale_seconds"][0], 10)
         self.assertEqual(settings["sensor_recovery_seconds"][0], 30)
         self.assertEqual(CONSTANTS["DEFAULT_CONTROL_STRATEGY"], "step")

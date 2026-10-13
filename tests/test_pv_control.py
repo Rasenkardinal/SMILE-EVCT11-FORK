@@ -70,16 +70,22 @@ class LadderTests(unittest.TestCase):
         self.assertEqual(ladder[-1].key, "3_15")
 
     def test_excluded_stage_is_skipped_and_unstable_flag_kept(self):
-        ladder = pc.build_ladder({**PROFILE, "excluded_stages": ["3_8"]})
+        ladder = pc.build_ladder({**PROFILE, "unstable_stages": ["3_7"], "excluded_stages": ["3_8"]})
         keys = [s.key for s in ladder]
         self.assertNotIn("3_8", keys)
         self.assertTrue(next(s for s in ladder if s.key == "3_7").unstable)
 
     def test_excluding_three_phase_six_amps_extends_single_phase_range(self):
-        base = [s.key for s in pc.build_ladder(PROFILE) if s.phases == 1]
+        # Under nominal values, all 1p stages (max 3450 W) are already < 3p 6 A (4140 W).
+        # When 1p max exceeds lowest 3p (e.g. customized profile), excluding 3_6 extends 1p range.
+        custom_profile = {
+            **PROFILE,
+            "power_1p": {**PROFILE["power_1p"], "14": 4200, "15": 4500},
+        }
+        base = [s.key for s in pc.build_ladder(custom_profile) if s.phases == 1]
         wider = [
             s.key
-            for s in pc.build_ladder({**PROFILE, "excluded_stages": ["3_6"]})
+            for s in pc.build_ladder({**custom_profile, "excluded_stages": ["3_6"]})
             if s.phases == 1
         ]
         self.assertGreater(len(wider), len(base))
@@ -103,8 +109,9 @@ class DirectStrategyTests(unittest.TestCase):
     def test_deficit_drops_directly_to_fitting_stage(self):
         controller = pc.PVController(PROFILE, settings("direct"))
         wb = wallbox(current=12)
-        # Only about 3000 W available while charging at 3-ph 12 A.
-        _, command = run(controller, wb, pv=3600, house=house_with_wallbox(P3["12"], 600))
+        # Only about 4200 W available while charging at 3-ph 12 A (8280 W).
+        # Available for wallbox = 4800 - 600 = 4200 W -> fits 3-ph 6 A (4140 W).
+        _, command = run(controller, wb, pv=4800, house=house_with_wallbox(P3["12"], 600))
         self.assertEqual(command.stage.key, "3_6")
 
     def test_no_surplus_switches_to_mode_one(self):
@@ -116,7 +123,8 @@ class DirectStrategyTests(unittest.TestCase):
     def test_mode_one_with_surplus_starts_with_fitting_stage(self):
         controller = pc.PVController(PROFILE, settings("direct"))
         wb = wallbox(mode=1, charging=False)
-        _, command = run(controller, wb, pv=3800, house=500)
+        # Available: 4900 - 500 = 4400 W; with 200 W reserve = 4200 W -> fits 3-ph 6 A (4140 W).
+        _, command = run(controller, wb, pv=4900, house=500)
         self.assertEqual(command.stage.key, "3_6")
 
     def test_small_surplus_uses_single_phase(self):
@@ -124,7 +132,7 @@ class DirectStrategyTests(unittest.TestCase):
         wb = wallbox(mode=1, charging=False)
         _, command = run(controller, wb, pv=2500, house=500)
         self.assertEqual(command.stage.phases, 1)
-        self.assertLessEqual(command.stage.power, 1800)
+        self.assertLessEqual(command.stage.power, 2300)
 
     def test_stays_when_stage_fits(self):
         controller = pc.PVController(PROFILE, settings("direct"))
@@ -154,9 +162,9 @@ class ProtectionTests(unittest.TestCase):
             controller, wb, pv=9000, house=house_with_wallbox(P3["12"]), grid=2000
         )
         self.assertIsNotNone(command)
-        self.assertLess(t, 60)
-        self.assertGreaterEqual(t, 30)
-        self.assertLessEqual(command.stage.power, P3["12"] - 1800)
+        self.assertLess(t, 80)
+        self.assertGreaterEqual(t, 50)
+        self.assertLessEqual(command.stage.power, P3["12"] - 1300)
 
     def test_grid_import_protection_time_is_configurable(self):
         controller = pc.PVController(
@@ -219,15 +227,15 @@ class ProtectionTests(unittest.TestCase):
 class GridAllowanceTests(unittest.TestCase):
     def test_allowance_starts_charging_without_full_surplus(self):
         wb = wallbox(mode=1, charging=False)
-        # 3000 W surplus is below 3-ph 6 A; 1000 W of grid import makes it fit.
+        # 3900 W surplus is below 3-ph 6 A (4140 W); 1000 W of grid import makes it fit.
         _, command = run(
-            pc.PVController(PROFILE, settings("direct")), wb, pv=3500, house=500
+            pc.PVController(PROFILE, settings("direct")), wb, pv=4400, house=500
         )
         self.assertEqual(command.stage.phases, 1)
         controller = pc.PVController(PROFILE, settings("direct", allowed_grid_import_w=1000))
-        _, command = run(controller, wb, pv=3500, house=500)
+        _, command = run(controller, wb, pv=4400, house=500)
         self.assertEqual(command.stage.phases, 3)
-        self.assertLessEqual(command.stage.power, 3000 + 1000 - 200)
+        self.assertLessEqual(command.stage.power, 3900 + 1000 - 50)
         self.assertIn("Defizit 1000 W", command.reason)
 
     def test_allowance_keeps_stage_despite_deficit(self):
@@ -247,13 +255,14 @@ class GridAllowanceTests(unittest.TestCase):
     def test_protection_limit_is_allowance_plus_tolerance(self):
         house = house_with_wallbox(P3["12"])
         controller = pc.PVController(PROFILE, settings("direct", allowed_grid_import_w=1000))
-        t, command = run(controller, wallbox(current=12), pv=9000, house=house, grid=1100)
+        t, command = run(controller, wallbox(current=12), pv=9000, house=house, grid=1400)
         if command is not None:
             self.assertNotIn("über Grenze", command.reason)
         controller = pc.PVController(PROFILE, settings("direct", allowed_grid_import_w=1000))
-        t, command = run(controller, wallbox(current=12), pv=9000, house=house, grid=1500)
+        t, command = run(controller, wallbox(current=12), pv=9000, house=house, grid=1600)
         self.assertIsNotNone(command)
-        self.assertLess(t, 60)
+        self.assertLess(t, 80)
+        self.assertGreaterEqual(t, 50)
         self.assertLessEqual(command.stage.power, P3["12"] - 300)
 
 
@@ -264,18 +273,21 @@ class WaitAndWindowTests(unittest.TestCase):
         stage6 = controller.current_stage(wallbox(current=6))
         stage10 = next(x for x in controller.ladder if x.key == "3_10")
         controller.command_finished(0, pc.Command(stage10, "test"), stage6, True)
-        self.assertIsNone(controller.update(59, pc.Measurement(pv=1, house=1, soc=60), wallbox(current=10)))
+        self.assertIsNone(controller.update(39, pc.Measurement(pv=1, house=1, soc=60), wallbox(current=10)))
         self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
-        controller.update(60, pc.Measurement(pv=1, house=1, soc=60), wallbox(current=10))
+        controller.update(40, pc.Measurement(pv=1, house=1, soc=60), wallbox(current=10))
         self.assertNotEqual(controller.state, pc.STATE_WAITING_WALLBOX)
 
         single = next(x for x in controller.ladder if x.phases == 1)
         controller.command_finished(100, pc.Command(single, "test"), stage10, True)
         controller.update(185, pc.Measurement(pv=1, house=1, soc=60), wallbox(phases=1, current=6))
         self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
+        controller.update(190, pc.Measurement(pv=1, house=1, soc=60), wallbox(phases=1, current=6))
+        self.assertNotEqual(controller.state, pc.STATE_WAITING_WALLBOX)
 
     def test_unstable_stage_uses_longer_window(self):
-        controller = pc.PVController(PROFILE, settings("direct"))
+        unstable_profile = {**PROFILE, "unstable_stages": ["3_7"]}
+        controller = pc.PVController(unstable_profile, settings("direct"))
         wb = wallbox(current=7)
         _, command = run(controller, wb, pv=12000, house=house_with_wallbox(P3["7"]), seconds=200)
         self.assertIsNone(command)
@@ -319,19 +331,21 @@ class ReactionDetectionTests(unittest.TestCase):
     def test_wait_ends_once_house_load_reached_expected_level(self):
         controller, previous, target, wb = self.prepare("3_6", "3_10")
         self.assertAlmostEqual(controller.expected_house_w, self.BASE + target.power)
-        self.feed(controller, wb, 25, 45, self.BASE + previous.power)
+        self.feed(controller, wb, 25, 30, self.BASE + previous.power)
         self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
-        # Wallbox reacts at t=50; confirmed after 10 s at t=60 (40 s after command).
-        self.feed(controller, wb, 50, 60, self.BASE + target.power + 150)
+        # Wallbox reacts at t=35; confirmed after 10 s at t=45 (25 s after command).
+        self.feed(controller, wb, 35, 45, self.BASE + target.power + 150)
         self.assertNotEqual(controller.state, pc.STATE_WAITING_WALLBOX)
-        self.assertEqual(controller.reaction_seconds, 40)
+        self.assertEqual(controller.reaction_seconds, 25)
 
     def test_unrelated_consumer_keeps_full_wait(self):
         controller, previous, _, wb = self.prepare("3_6", "3_10")
-        # A 2 kW consumer switches on instead of the wallbox reacting.
-        self.feed(controller, wb, 25, 75, self.BASE + previous.power + 2000)
+        # A 4 kW consumer switches on instead of the wallbox reacting.
+        # expected is BASE + target.power (500 + 6900 = 7400 W, tolerance ~966 W).
+        # previous.power is 4140 W. Adding 4 kW gives 500 + 4140 + 4000 = 8640 W, well outside tolerance.
+        self.feed(controller, wb, 25, 55, self.BASE + previous.power + 4000)
         self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
-        self.feed(controller, wb, 80, 80, self.BASE + previous.power + 2000)
+        self.feed(controller, wb, 60, 60, self.BASE + previous.power + 4000)
         self.assertNotEqual(controller.state, pc.STATE_WAITING_WALLBOX)
         self.assertIsNone(controller.reaction_seconds)
 
@@ -347,7 +361,7 @@ class ReactionDetectionTests(unittest.TestCase):
     def test_zero_confirmation_time_disables_detection(self):
         controller, _, target, wb = self.prepare("3_6", "3_10", reaction_confirm_seconds=0)
         self.assertIsNone(controller.expected_house_w)
-        self.feed(controller, wb, 25, 75, self.BASE + target.power)
+        self.feed(controller, wb, 25, 55, self.BASE + target.power)
         self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
 
 

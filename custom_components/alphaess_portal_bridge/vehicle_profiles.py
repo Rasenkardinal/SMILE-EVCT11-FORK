@@ -22,18 +22,18 @@ POWER_KEYS = {1: PROFILE_POWER_1P, 3: PROFILE_POWER_3P}
 MAX_POWER_W = {1: 4000, 3: 12000}
 
 DEFAULT_VEHICLE_PROFILE_ID = "standard"
-# Stable end values measured on the user's vehicle after settling (W).
+# Theoretical nominal power ratings (230 V per phase: 1p = A * 230 W, 3p = A * 690 W).
 DEFAULT_VEHICLE_PROFILE: dict[str, Any] = {
     PROFILE_NAME: "Standardfahrzeug",
     PROFILE_POWER_1P: {
-        "6": 1420, "7": 1640, "8": 1840, "9": 2075, "10": 2250,
-        "11": 2480, "12": 2720, "13": 2960, "14": 3170, "15": 3400,
+        "6": 1380, "7": 1610, "8": 1840, "9": 2070, "10": 2300,
+        "11": 2530, "12": 2760, "13": 2990, "14": 3220, "15": 3450,
     },
     PROFILE_POWER_3P: {
-        "6": 2990, "7": 3440, "8": 5540, "9": 6260, "10": 6960,
-        "11": 7550, "12": 8280, "13": 9000, "14": 9650, "15": 10350,
+        "6": 4140, "7": 4830, "8": 5520, "9": 6210, "10": 6900,
+        "11": 7590, "12": 8280, "13": 8970, "14": 9660, "15": 10350,
     },
-    PROFILE_UNSTABLE_STAGES: ["3_7"],
+    PROFILE_UNSTABLE_STAGES: [],
     PROFILE_EXCLUDED_STAGES: [],
 }
 

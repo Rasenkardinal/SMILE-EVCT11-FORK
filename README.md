@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.11.5 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.11.6 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -87,16 +87,20 @@ Wirkung erklärt und angibt, ob sie nur beim Erhöhen, nur beim Senken oder in
 beide Richtungen wirkt.
 
 Ab **0.10.0** kann in Modus 5 dauerhaft mehr geladen werden, als
-PV-Überschuss vorhanden ist („Zulässiges Defizit beim Laden“, Standard 0 W =
-nur PV-Überschuss). Das Defizit deckt je nach Lage der Hausakku oder das Netz.
+PV-Überschuss vorhanden ist („Zulässiger dauerhafter Netzbezug“, ehemals „Zulässiges Defizit beim Laden“).
+Das Defizit deckt je nach Lage der Hausakku oder das Netz.
 Die Regelung rechnet dann mit PV-Überschuss + diesem Wert; der
-Netzbezugsschutz greift erst oberhalb dieses Werts plus Toleranz. Ab
-**0.11.0** lässt sich der Wert zusätzlich über den Slider „Zulässiges Defizit“
+Netzbezugsschutz greift erst oberhalb dieses Werts plus Toleranz (zulässiger mittlerer Netzbezug).
+Ab **0.11.0** lässt sich der Wert zusätzlich über den Slider „Zulässiger dauerhafter Netzbezug“
 (0–5.000 W) einstellen; er wirkt sofort ohne Neuladen der Integration.
 
-Die Fork-Version **0.11.5** wird als GitHub-Release **`v0.11.5`** für HACS
-bereitgestellt. Sie koppelt die Verfügbarkeit von Slider und Sensor an die Auswahl von Modus 5; insgesamt
-bestehen **120 automatisierte Tests**.
+Die Fork-Version **0.11.6** wird als GitHub-Release **`v0.11.6`** für HACS
+bereitgestellt. Sie setzt die Voreinstellungen des integrierten „Standardfahrzeugs“
+auf rein rechnerische Nennwerte (1p: 1.380–3.450 W, 3p: 4.140–10.350 W ohne Ausschlüsse),
+optimiert die Voreinstellungen der Regelungsparameter (Wartezeit Strom 40 s, Phasen 90 s,
+dauerhafter Netzbezug 200 W, mittlerer Netzbezug 500 W, Netzbezugsschutz 50 s, Reserve 50 W)
+und benennt `allowed_grid_import` einheitlich in „Zulässiger dauerhafter Netzbezug“ um.
+Insgesamt bestehen **120 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.

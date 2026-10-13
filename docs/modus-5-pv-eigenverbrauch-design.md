@@ -381,13 +381,13 @@ Standardwerte der Regelungsparameter:
 | Regelungsart | Stufenregelung | Stufe/Direkt | Nutzerentscheidung |
 | Mittelungszeitraum | 120 s | 30–900 s | Nutzerentscheidung |
 | Mittelungszeitraum instabile Stufen | 240 s | 60–1.800 s | Messzyklus (3–5 min) |
-| Wartezeit nach Stromänderung | 60 s | 30–600 s | Messzyklus (Reaktion 25–29 s + Einschwingen) |
+| Wartezeit nach Stromänderung | 40 s | 30–600 s | Messzyklus (Reaktion 25–29 s + Einschwingen) |
 | Wartezeit nach Phasenwechsel | 90 s | 30–600 s | Messzyklus (Pause 35–45 s + 10–15 s) |
-| Zulässiges Defizit beim Laden | 0 W | 0–5.000 W | Nutzerentscheidung (0 = nur PV-Überschuss) |
-| Netzbezugsschutz: Toleranz über dem zulässigen Defizit | 200 W | 0–5.000 W | vorläufiger Vorschlag |
-| Netzbezugsschutz greift nach | 30 s | 10–300 s | vorläufiger Vorschlag |
+| Zulässiger dauerhafter Netzbezug | 200 W | 0–5.000 W | Nutzerentscheidung (Basis-Netzbudget) |
+| Zulässiger mittlerer Netzbezug (Toleranz) | 500 W | 0–5.000 W | Nutzerentscheidung |
+| Netzbezugsschutz greift nach | 50 s | 10–300 s | Nutzerentscheidung |
 | Reaktionserkennung: Bestätigungszeit | 10 s | 0–60 s (0 = aus) | vorläufiger Vorschlag |
-| Überschussreserve vor Erhöhung | 200 W | 0–3.000 W | vorläufiger Vorschlag |
+| Überschussreserve vor Erhöhung | 50 W | 0–3.000 W | Nutzerentscheidung |
 | Mindest-SOC Hausakku | 20 % | 0–100 % | vorläufiger Vorschlag |
 | SOC-Hysterese für Wiederanlauf | 5 % | 1–50 % | vorläufiger Vorschlag |
 | Sensor gilt als veraltet nach | 10 s | 5–120 s | Nutzerentscheidung |
@@ -396,13 +396,13 @@ Standardwerte der Regelungsparameter:
 Die Überschussreserve bedeutet: erhöhen nur, wenn der Überschuss die
 Leistung der nächsten Stufe um diesen Wert übersteigt.
 
-Das zulässige Defizit beim Laden (X) wird zum Überschuss addiert; alle
+Der zulässige dauerhafte Netzbezug (X) wird zum Überschuss addiert; alle
 Entscheidungen (Starten, Erhöhen, Senken) rechnen mit dem Ladebudget
 Überschuss + X. Das Defizit deckt je nach Lage der Hausakku oder das Netz.
 Der Netzbezugsschutz misst weiterhin den Netzbezug und greift erst oberhalb
-von X + Toleranz. Mit X = 0 gilt das bisherige Verhalten.
+von X + Toleranz (zulässiger mittlerer Netzbezug).
 
-X lässt sich zusätzlich über die Slider-Entität „Zulässiges Defizit“
+X lässt sich zusätzlich über die Slider-Entität „Zulässiger dauerhafter Netzbezug“
 (Kategorie Konfiguration) ändern. Der Slider schreibt dieselbe Option,
 lädt die Integration aber nicht neu: Die laufende Regelung übernimmt den Wert
 ab der nächsten Entscheidung, die gebildeten Mittelwerte bleiben erhalten.

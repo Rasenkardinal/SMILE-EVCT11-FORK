@@ -1,5 +1,20 @@
 # Changelog
 
+## Fork 0.11.6 – 2026-10-13
+
+- Standardfahrzeug auf rechnerische Nennwerte zurückgesetzt:
+  1-phasig 6–15 A = 1.380–3.450 W (A × 230 V), 3-phasig 6–15 A = 4.140–10.350 W (A × 690 V).
+  Keine instabilen oder ausgeschlossenen Stufen als Default.
+- Voreinstellungen der Modus-5-Regelungsparameter optimiert:
+  - Wartezeit nach Stromänderung: 40 s (vorher 60 s)
+  - Wartezeit nach Phasenwechsel: 90 s
+  - Zulässiger dauerhafter Netzbezug: 200 W (vorher 0 W)
+  - Zulässiger mittlerer Netzbezug: 500 W (vorher 200 W)
+  - Netzbezugsschutz greift nach: 50 s (vorher 30 s)
+  - Überschussreserve vor Erhöhung: 50 W (vorher 200 W)
+- Umbenennung des Parameters `allowed_grid_import_w` bzw. der Slider-Entität
+  in „Zulässiger dauerhafter Netzbezug“ (im Konfigurationsdialog und Dashboard).
+
 ## Fork 0.11.5 – 2026-10-13
 
 - Entitäten an Modus 5 gekoppelt: Der Slider „Zulässiges Defizit“ und der

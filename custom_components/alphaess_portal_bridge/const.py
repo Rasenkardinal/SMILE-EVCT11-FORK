@@ -30,20 +30,20 @@ CONTROL_STRATEGIES = (CONTROL_STRATEGY_STEP, CONTROL_STRATEGY_DIRECT)
 CONTROL_NUMBER_SETTINGS: dict[str, tuple[int, int, int, int, str]] = {
     "average_window_seconds": (120, 30, 900, 10, "s"),
     "unstable_average_window_seconds": (240, 60, 1800, 10, "s"),
-    "current_change_wait_seconds": (60, 30, 600, 5, "s"),
+    "current_change_wait_seconds": (40, 30, 600, 5, "s"),
     "phase_change_wait_seconds": (90, 30, 600, 5, "s"),
-    "allowed_grid_import_w": (0, 0, 5000, 50, "W"),
-    "grid_import_limit_w": (200, 0, 5000, 50, "W"),
-    "grid_import_protection_seconds": (30, 10, 300, 5, "s"),
+    "allowed_grid_import_w": (200, 0, 5000, 50, "W"),
+    "grid_import_limit_w": (500, 0, 5000, 50, "W"),
+    "grid_import_protection_seconds": (50, 10, 300, 5, "s"),
     "reaction_confirm_seconds": (10, 0, 60, 5, "s"),
-    "surplus_reserve_w": (200, 0, 3000, 50, "W"),
+    "surplus_reserve_w": (50, 0, 3000, 50, "W"),
     "min_battery_soc": (20, 0, 100, 1, "%"),
     "battery_soc_hysteresis": (5, 1, 50, 1, "%"),
     "sensor_stale_seconds": (10, 5, 120, 1, "s"),
     "sensor_recovery_seconds": (30, 10, 600, 5, "s"),
 }
 DEFAULT_CONTROL_STRATEGY = CONTROL_STRATEGY_STEP
-# Option key of "Zulässiges Defizit beim Laden"; also a live number entity.
+# Option key of "Zulässiger dauerhafter Netzbezug"; also a live number entity.
 CONF_ALLOWED_DEFICIT = "allowed_grid_import_w"
 # Persisted user intent "HA mode 5 active"; kept separate from the AlphaESS
 # mode actually written to the portal so fallbacks can return automatically.

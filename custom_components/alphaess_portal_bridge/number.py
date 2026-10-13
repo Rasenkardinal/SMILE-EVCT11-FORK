@@ -38,7 +38,7 @@ class AlphaESSAllowedDeficitNumber(AlphaESSWallboxEntity, NumberEntity):
     """Mode 5: power by which charging may exceed the PV surplus."""
 
     _attr_has_entity_name = False
-    _attr_name = "Zulässiges Defizit"
+    _attr_name = "Zulässiger dauerhafter Netzbezug"
     _attr_icon = "mdi:transmission-tower-import"
     _attr_mode = NumberMode.SLIDER
     _attr_native_unit_of_measurement = UnitOfPower.WATT
