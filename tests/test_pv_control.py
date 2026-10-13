@@ -228,7 +228,7 @@ class GridAllowanceTests(unittest.TestCase):
         _, command = run(controller, wb, pv=3500, house=500)
         self.assertEqual(command.stage.phases, 3)
         self.assertLessEqual(command.stage.power, 3000 + 1000 - 200)
-        self.assertIn("Netzbezug 1000 W", command.reason)
+        self.assertIn("Defizit 1000 W", command.reason)
 
     def test_allowance_keeps_stage_despite_deficit(self):
         # About 800 W short for 3-ph 10 A; grid shows that import.

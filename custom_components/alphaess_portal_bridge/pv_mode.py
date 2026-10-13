@@ -23,6 +23,7 @@ from homeassistant.util import dt as dt_util
 from .api import AuthenticationError, PortalConnectionError
 from .const import (
     CONF_ACTIVE_VEHICLE_PROFILE,
+    CONF_ALLOWED_DEFICIT,
     CONF_BATTERY_SOC_ENTITY,
     CONF_CONTROL_STRATEGY,
     CONF_GRID_POWER_ENTITY,
@@ -144,6 +145,27 @@ class PVModeManager:
         self.hass.config_entries.async_update_entry(
             self.entry, options={**self.entry.options, CONF_PV_MODE_ACTIVE: self.active}
         )
+
+    # -- permitted deficit (option and live number entity) ---------------
+    def allowed_deficit(self) -> float:
+        default = CONTROL_NUMBER_SETTINGS[CONF_ALLOWED_DEFICIT][0]
+        value = self.entry.options.get(CONF_ALLOWED_DEFICIT, default)
+        return float(value) if isinstance(value, (int, float)) else float(default)
+
+    def set_allowed_deficit(self, value: float) -> None:
+        """Store the value and apply it to the running controller.
+
+        Writing the options directly does not reload the entry, so the
+        running averages are kept and the next decision uses the new value.
+        """
+        _, minimum, maximum, _, _ = CONTROL_NUMBER_SETTINGS[CONF_ALLOWED_DEFICIT]
+        value = float(min(max(value, minimum), maximum))
+        self.hass.config_entries.async_update_entry(
+            self.entry, options={**self.entry.options, CONF_ALLOWED_DEFICIT: value}
+        )
+        if self.controller is not None:
+            self.controller.settings.allowed_grid_import_w = value
+        self._notify(force=True)
 
     async def async_activate(self) -> None:
         generation, _ = settings_object(self.coordinator)
@@ -315,7 +337,7 @@ class PVModeManager:
             attrs.update(
                 {
                     "Verfügbar für Wallbox Ø (W)": round(controller.available_w),
-                    "Ladebudget inkl. erlaubtem Netzbezug (W)": round(
+                    "Ladebudget inkl. zulässigem Defizit (W)": round(
                         controller.available_w + controller.settings.allowed_grid_import_w
                     ),
                     "PV Ø (W)": round(controller.averages["pv"]),

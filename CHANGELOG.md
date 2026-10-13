@@ -1,5 +1,17 @@
 # Changelog
 
+## Fork 0.11.0 – 2026-10-13
+
+- Modus 5: Neuer Slider „Zulässiges Defizit beim Laden“ (0–5.000 W,
+  Kategorie Konfiguration). Er schreibt dieselbe Option wie der
+  Optionsdialog, wirkt aber sofort ohne Neuladen; die laufenden Mittelwerte
+  bleiben erhalten.
+- Option „Zulässiger Netzbezug beim Laden“ umbenannt in „Zulässiges Defizit
+  beim Laden“, da auch der Hausakku das Defizit decken kann (interner
+  Schlüssel unverändert, gespeicherte Werte bleiben). Die Schutzoption heißt
+  jetzt „Netzbezugsschutz: Toleranz über dem zulässigen Defizit“.
+- Sensor-Attribut heißt jetzt „Ladebudget inkl. zulässigem Defizit (W)“.
+
 ## Fork 0.10.0 – 2026-10-13
 
 - Modus 5: neue Option „Zulässiger Netzbezug beim Laden“ (Standard 0 W).

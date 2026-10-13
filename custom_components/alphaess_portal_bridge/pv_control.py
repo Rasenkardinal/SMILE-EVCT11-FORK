@@ -386,8 +386,8 @@ class PVController:
             )
             return self._command_if_changed(None, current, wallbox, "SOC unter Mindestwert")
 
-        # The permitted grid import while charging raises the protection
-        # limit as well, otherwise the protection would undo the allowance.
+        # The permitted deficit while charging raises the protection limit as
+        # well, otherwise the protection would undo the allowance.
         grid_limit = s.allowed_grid_import_w + s.grid_import_limit_w
         # Never wait longer than a full window; the span cannot exceed it.
         protection_span = min(s.grid_import_protection_seconds, window - SAMPLE_INTERVAL_SECONDS)
@@ -412,7 +412,7 @@ class PVController:
         budget = available + s.allowed_grid_import_w
         reason = f"verfügbar Ø {available:.0f} W"
         if s.allowed_grid_import_w > 0:
-            reason += f" + Netzbezug {s.allowed_grid_import_w:.0f} W"
+            reason += f" + Defizit {s.allowed_grid_import_w:.0f} W"
         target = self._target(current, budget)
         self._set(STATE_WAITING_SURPLUS if target is None else STATE_ACTIVE, reason)
         return self._command_if_changed(target, current, wallbox, reason)

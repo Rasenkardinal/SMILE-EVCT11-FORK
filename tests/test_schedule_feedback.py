@@ -203,6 +203,7 @@ class TesterFeedbackScheduleTests(unittest.TestCase):
         namespace = {
             "NumberMode": SimpleNamespace(BOX="box", SLIDER="slider"),
             "UnitOfElectricCurrent": SimpleNamespace(AMPERE="A"),
+            "UnitOfPower": SimpleNamespace(WATT="W"),
             "EntityCategory": SimpleNamespace(CONFIG="config"),
             "AlphaESSWallboxEntity": type("AlphaESSWallboxEntity", (), {}),
             "NumberEntity": type("NumberEntity", (), {}),
@@ -223,6 +224,10 @@ class TesterFeedbackScheduleTests(unittest.TestCase):
         self.assertEqual(custom_current._attr_native_step, 1)
         for name in ("AlphaESSHouseholdCurrentNumber", "AlphaESSTimePeriodCurrentNumber"):
             self.assertEqual(namespace[name]._attr_mode, "box")
+        # Mode-5 power slider (W), not a current input.
+        deficit = namespace["AlphaESSAllowedDeficitNumber"]
+        self.assertEqual(deficit._attr_mode, "slider")
+        self.assertEqual(deficit._attr_native_unit_of_measurement, "W")
 
     def test_schedule_selected_only_in_g2t_schedule_strategy(self):
         for strategy, expected in [(0, False), (1, True), (2, False)]:

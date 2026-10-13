@@ -383,8 +383,8 @@ Standardwerte der Regelungsparameter:
 | Mittelungszeitraum instabile Stufen | 240 s | 60–1.800 s | Messzyklus (3–5 min) |
 | Wartezeit nach Stromänderung | 60 s | 30–600 s | Messzyklus (Reaktion 25–29 s + Einschwingen) |
 | Wartezeit nach Phasenwechsel | 90 s | 30–600 s | Messzyklus (Pause 35–45 s + 10–15 s) |
-| Zulässiger Netzbezug beim Laden | 0 W | 0–5.000 W | Nutzerentscheidung (0 = nur PV-Überschuss) |
-| Netzbezugsschutz: Toleranz über dem zulässigen Netzbezug | 200 W | 0–5.000 W | vorläufiger Vorschlag |
+| Zulässiges Defizit beim Laden | 0 W | 0–5.000 W | Nutzerentscheidung (0 = nur PV-Überschuss) |
+| Netzbezugsschutz: Toleranz über dem zulässigen Defizit | 200 W | 0–5.000 W | vorläufiger Vorschlag |
 | Netzbezugsschutz greift nach | 30 s | 10–300 s | vorläufiger Vorschlag |
 | Reaktionserkennung: Bestätigungszeit | 10 s | 0–60 s (0 = aus) | vorläufiger Vorschlag |
 | Überschussreserve vor Erhöhung | 200 W | 0–3.000 W | vorläufiger Vorschlag |
@@ -396,10 +396,16 @@ Standardwerte der Regelungsparameter:
 Die Überschussreserve bedeutet: erhöhen nur, wenn der Überschuss die
 Leistung der nächsten Stufe um diesen Wert übersteigt.
 
-Der zulässige Netzbezug beim Laden (X) wird zum Überschuss addiert; alle
+Das zulässige Defizit beim Laden (X) wird zum Überschuss addiert; alle
 Entscheidungen (Starten, Erhöhen, Senken) rechnen mit dem Ladebudget
-Überschuss + X. Der Netzbezugsschutz greift erst oberhalb von X + Toleranz.
-Mit X = 0 gilt das bisherige Verhalten.
+Überschuss + X. Das Defizit deckt je nach Lage der Hausakku oder das Netz.
+Der Netzbezugsschutz misst weiterhin den Netzbezug und greift erst oberhalb
+von X + Toleranz. Mit X = 0 gilt das bisherige Verhalten.
+
+X lässt sich zusätzlich über die Slider-Entität „Zulässiges Defizit beim
+Laden“ (Kategorie Konfiguration) ändern. Der Slider schreibt dieselbe Option,
+lädt die Integration aber nicht neu: Die laufende Regelung übernimmt den Wert
+ab der nächsten Entscheidung, die gebildeten Mittelwerte bleiben erhalten.
 
 ### 5.2 Umgesetzte Regelung (erste Version)
 
@@ -437,7 +443,7 @@ fest:
   Erkennung meist nicht. Wechsel zu Modus 1 nutzen immer die volle Wartezeit.
 - **Erhöhen:** auf eine Stufe, deren Tabellenleistung ≤ Ladebudget −
   Überschussreserve ist. **Senken:** sobald die Leistung der aktuellen Stufe
-  über dem Ladebudget liegt (Ladebudget = verfügbar + zulässiger Netzbezug
+  über dem Ladebudget liegt (Ladebudget = verfügbar + zulässiges Defizit
   beim Laden). Dazwischen bleibt die Stufe (Totband =
   Reserve); in diesem Bereich deckt der Hausakku kleine Lücken.
 - **Direktregelung:** fährt die höchste passende Stufe in einem Befehl an;
@@ -449,7 +455,7 @@ fest:
   Sensor-Fallback.
 - **Netzbezugsschutz:** liegt der Netzbezug-Mittelwert nach der einstellbaren
   Zeit (Standard 30 s, höchstens der Mittelungszeitraum) über zulässigem
-  Netzbezug beim Laden + Toleranz,
+  Defizit beim Laden + Toleranz,
   wird sofort reduziert (direkt: um die Überschreitung;
   Stufe: eine Stufe), ohne das volle Fenster abzuwarten.
 - **SOC-Schutz:** unter Mindest-SOC sofort Modus 1; Rückkehr erst ab

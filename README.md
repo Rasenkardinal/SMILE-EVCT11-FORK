@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.10.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.11.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -86,13 +86,17 @@ Ab **0.9.2** zeigt jede Option der PV-Laderegelung einen Hilfetext, der die
 Wirkung erklärt und angibt, ob sie nur beim Erhöhen, nur beim Senken oder in
 beide Richtungen wirkt.
 
-Ab **0.10.0** kann in Modus 5 ein dauerhafter Netzbezug zum Laden erlaubt
-werden („Zulässiger Netzbezug beim Laden“, Standard 0 W = nur PV-Überschuss).
+Ab **0.10.0** kann in Modus 5 dauerhaft mehr geladen werden, als
+PV-Überschuss vorhanden ist („Zulässiges Defizit beim Laden“, Standard 0 W =
+nur PV-Überschuss). Das Defizit deckt je nach Lage der Hausakku oder das Netz.
 Die Regelung rechnet dann mit PV-Überschuss + diesem Wert; der
-Netzbezugsschutz greift erst oberhalb dieses Werts plus Toleranz.
+Netzbezugsschutz greift erst oberhalb dieses Werts plus Toleranz. Ab
+**0.11.0** lässt sich der Wert zusätzlich über den Slider „Zulässiges Defizit
+beim Laden“ (0–5.000 W) einstellen; er wirkt sofort ohne Neuladen der
+Integration.
 
-Die Fork-Version **0.10.0** wird als GitHub-Release **`v0.10.0`** für HACS
-bereitgestellt. Sie ergänzt den zulässigen Netzbezug beim Laden; insgesamt
+Die Fork-Version **0.11.0** wird als GitHub-Release **`v0.11.0`** für HACS
+bereitgestellt. Sie ergänzt den Slider für das zulässige Defizit beim Laden; insgesamt
 bestehen **119 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 

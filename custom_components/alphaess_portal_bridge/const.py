@@ -43,6 +43,8 @@ CONTROL_NUMBER_SETTINGS: dict[str, tuple[int, int, int, int, str]] = {
     "sensor_recovery_seconds": (30, 10, 600, 5, "s"),
 }
 DEFAULT_CONTROL_STRATEGY = CONTROL_STRATEGY_STEP
+# Option key of "Zulässiges Defizit beim Laden"; also a live number entity.
+CONF_ALLOWED_DEFICIT = "allowed_grid_import_w"
 # Persisted user intent "HA mode 5 active"; kept separate from the AlphaESS
 # mode actually written to the portal so fallbacks can return automatically.
 CONF_PV_MODE_ACTIVE = "pv_mode_active"
