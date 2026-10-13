@@ -383,7 +383,8 @@ Standardwerte der Regelungsparameter:
 | Mittelungszeitraum instabile Stufen | 240 s | 60–1.800 s | Messzyklus (3–5 min) |
 | Wartezeit nach Stromänderung | 60 s | 30–600 s | Messzyklus (Reaktion 25–29 s + Einschwingen) |
 | Wartezeit nach Phasenwechsel | 90 s | 30–600 s | Messzyklus (Pause 35–45 s + 10–15 s) |
-| Zulässiger mittlerer Netzbezug | 200 W | 0–5.000 W | vorläufiger Vorschlag |
+| Zulässiger Netzbezug beim Laden | 0 W | 0–5.000 W | Nutzerentscheidung (0 = nur PV-Überschuss) |
+| Netzbezugsschutz: Toleranz über dem zulässigen Netzbezug | 200 W | 0–5.000 W | vorläufiger Vorschlag |
 | Netzbezugsschutz greift nach | 30 s | 10–300 s | vorläufiger Vorschlag |
 | Reaktionserkennung: Bestätigungszeit | 10 s | 0–60 s (0 = aus) | vorläufiger Vorschlag |
 | Überschussreserve vor Erhöhung | 200 W | 0–3.000 W | vorläufiger Vorschlag |
@@ -393,7 +394,12 @@ Standardwerte der Regelungsparameter:
 | Gültige Sensorzeit vor Rückkehr | 30 s | 10–600 s | Nutzerentscheidung |
 
 Die Überschussreserve bedeutet: erhöhen nur, wenn der Überschuss die
-Mehrleistung der nächsten Stufe um diesen Wert übersteigt.
+Leistung der nächsten Stufe um diesen Wert übersteigt.
+
+Der zulässige Netzbezug beim Laden (X) wird zum Überschuss addiert; alle
+Entscheidungen (Starten, Erhöhen, Senken) rechnen mit dem Ladebudget
+Überschuss + X. Der Netzbezugsschutz greift erst oberhalb von X + Toleranz.
+Mit X = 0 gilt das bisherige Verhalten.
 
 ### 5.2 Umgesetzte Regelung (erste Version)
 
@@ -429,9 +435,10 @@ fest:
   die Hauslast fließt danach ohnehin korrekt in den neuen Mittelwert ein.
   Bei kleinen Änderungen (einphasig ±1 A, Band ca. ±80 W) greift die
   Erkennung meist nicht. Wechsel zu Modus 1 nutzen immer die volle Wartezeit.
-- **Erhöhen:** auf eine Stufe, deren Tabellenleistung ≤ verfügbar −
+- **Erhöhen:** auf eine Stufe, deren Tabellenleistung ≤ Ladebudget −
   Überschussreserve ist. **Senken:** sobald die Leistung der aktuellen Stufe
-  über dem verfügbaren Wert liegt. Dazwischen bleibt die Stufe (Totband =
+  über dem Ladebudget liegt (Ladebudget = verfügbar + zulässiger Netzbezug
+  beim Laden). Dazwischen bleibt die Stufe (Totband =
   Reserve); in diesem Bereich deckt der Hausakku kleine Lücken.
 - **Direktregelung:** fährt die höchste passende Stufe in einem Befehl an;
   **Stufenregelung:** eine Stufe pro Entscheidung.
@@ -441,7 +448,8 @@ fest:
   geschrieben (kein START/STOP). Modus 1 dient auch als SOC-Schutz und
   Sensor-Fallback.
 - **Netzbezugsschutz:** liegt der Netzbezug-Mittelwert nach der einstellbaren
-  Zeit (Standard 30 s, höchstens der Mittelungszeitraum) über der Grenze,
+  Zeit (Standard 30 s, höchstens der Mittelungszeitraum) über zulässigem
+  Netzbezug beim Laden + Toleranz,
   wird sofort reduziert (direkt: um die Überschreitung;
   Stufe: eine Stufe), ohne das volle Fenster abzuwarten.
 - **SOC-Schutz:** unter Mindest-SOC sofort Modus 1; Rückkehr erst ab

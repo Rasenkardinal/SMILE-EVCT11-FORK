@@ -216,6 +216,47 @@ class ProtectionTests(unittest.TestCase):
         self.assertIsNotNone(controller.update(60, bad, wallbox()))
 
 
+class GridAllowanceTests(unittest.TestCase):
+    def test_allowance_starts_charging_without_full_surplus(self):
+        wb = wallbox(mode=1, charging=False)
+        # 3000 W surplus is below 3-ph 6 A; 1000 W of grid import makes it fit.
+        _, command = run(
+            pc.PVController(PROFILE, settings("direct")), wb, pv=3500, house=500
+        )
+        self.assertEqual(command.stage.phases, 1)
+        controller = pc.PVController(PROFILE, settings("direct", allowed_grid_import_w=1000))
+        _, command = run(controller, wb, pv=3500, house=500)
+        self.assertEqual(command.stage.phases, 3)
+        self.assertLessEqual(command.stage.power, 3000 + 1000 - 200)
+        self.assertIn("Netzbezug 1000 W", command.reason)
+
+    def test_allowance_keeps_stage_despite_deficit(self):
+        # About 800 W short for 3-ph 10 A; grid shows that import.
+        house = house_with_wallbox(P3["10"])
+        pv = P3["10"] - 800 + 500
+        _, command = run(
+            pc.PVController(PROFILE, settings("step")), wallbox(current=10),
+            pv=pv, house=house, grid=800,
+        )
+        self.assertEqual(command.stage.key, "3_9")
+        controller = pc.PVController(PROFILE, settings("step", allowed_grid_import_w=1000))
+        _, command = run(controller, wallbox(current=10), pv=pv, house=house, grid=800)
+        self.assertIsNone(command)
+        self.assertEqual(controller.state, pc.STATE_ACTIVE)
+
+    def test_protection_limit_is_allowance_plus_tolerance(self):
+        house = house_with_wallbox(P3["12"])
+        controller = pc.PVController(PROFILE, settings("direct", allowed_grid_import_w=1000))
+        t, command = run(controller, wallbox(current=12), pv=9000, house=house, grid=1100)
+        if command is not None:
+            self.assertNotIn("über Grenze", command.reason)
+        controller = pc.PVController(PROFILE, settings("direct", allowed_grid_import_w=1000))
+        t, command = run(controller, wallbox(current=12), pv=9000, house=house, grid=1500)
+        self.assertIsNotNone(command)
+        self.assertLess(t, 60)
+        self.assertLessEqual(command.stage.power, P3["12"] - 300)
+
+
 class WaitAndWindowTests(unittest.TestCase):
     def test_wait_after_phase_change_and_after_current_change(self):
         s = settings("direct")

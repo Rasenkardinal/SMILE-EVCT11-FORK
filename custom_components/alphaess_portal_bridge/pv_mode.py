@@ -315,6 +315,9 @@ class PVModeManager:
             attrs.update(
                 {
                     "Verfügbar für Wallbox Ø (W)": round(controller.available_w),
+                    "Ladebudget inkl. erlaubtem Netzbezug (W)": round(
+                        controller.available_w + controller.settings.allowed_grid_import_w
+                    ),
                     "PV Ø (W)": round(controller.averages["pv"]),
                     "Hauslast Ø (W)": round(controller.averages["house"]),
                     "Netz Ø (W)": round(controller.averages["grid"]),

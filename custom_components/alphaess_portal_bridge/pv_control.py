@@ -95,6 +95,7 @@ class ControlSettings:
     unstable_average_window_seconds: float = 240
     current_change_wait_seconds: float = 60
     phase_change_wait_seconds: float = 90
+    allowed_grid_import_w: float = 0
     grid_import_limit_w: float = 200
     grid_import_protection_seconds: float = 30
     reaction_confirm_seconds: float = 10
@@ -385,15 +386,18 @@ class PVController:
             )
             return self._command_if_changed(None, current, wallbox, "SOC unter Mindestwert")
 
+        # The permitted grid import while charging raises the protection
+        # limit as well, otherwise the protection would undo the allowance.
+        grid_limit = s.allowed_grid_import_w + s.grid_import_limit_w
         # Never wait longer than a full window; the span cannot exceed it.
         protection_span = min(s.grid_import_protection_seconds, window - SAMPLE_INTERVAL_SECONDS)
         if (
             current is not None
             and span >= protection_span
-            and grid > s.grid_import_limit_w
+            and grid > grid_limit
         ):
             if s.strategy == STRATEGY_DIRECT:
-                target = self._highest_at_most(current.power - (grid - s.grid_import_limit_w))
+                target = self._highest_at_most(current.power - (grid - grid_limit))
             else:
                 target = self._step_down(current)
             self._set(STATE_ACTIVE, f"Netzbezug Ø {grid:.0f} W über Grenze")
@@ -405,14 +409,13 @@ class PVController:
             self._set(STATE_AVERAGING, f"{int(span)} von {int(window)} s")
             return None
 
-        target = self._target(current, available)
-        if target is None:
-            self._set(STATE_WAITING_SURPLUS, f"verfügbar Ø {available:.0f} W")
-        else:
-            self._set(STATE_ACTIVE, f"verfügbar Ø {available:.0f} W")
-        return self._command_if_changed(
-            target, current, wallbox, f"verfügbar Ø {available:.0f} W"
-        )
+        budget = available + s.allowed_grid_import_w
+        reason = f"verfügbar Ø {available:.0f} W"
+        if s.allowed_grid_import_w > 0:
+            reason += f" + Netzbezug {s.allowed_grid_import_w:.0f} W"
+        target = self._target(current, budget)
+        self._set(STATE_WAITING_SURPLUS if target is None else STATE_ACTIVE, reason)
+        return self._command_if_changed(target, current, wallbox, reason)
 
     def command_finished(
         self, now: float, command: Command, previous: Stage | None, success: bool

@@ -32,6 +32,7 @@ CONTROL_NUMBER_SETTINGS: dict[str, tuple[int, int, int, int, str]] = {
     "unstable_average_window_seconds": (240, 60, 1800, 10, "s"),
     "current_change_wait_seconds": (60, 30, 600, 5, "s"),
     "phase_change_wait_seconds": (90, 30, 600, 5, "s"),
+    "allowed_grid_import_w": (0, 0, 5000, 50, "W"),
     "grid_import_limit_w": (200, 0, 5000, 50, "W"),
     "grid_import_protection_seconds": (30, 10, 300, 5, "s"),
     "reaction_confirm_seconds": (10, 0, 60, 5, "s"),

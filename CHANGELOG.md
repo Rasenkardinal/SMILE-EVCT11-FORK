@@ -1,5 +1,14 @@
 # Changelog
 
+## Fork 0.10.0 – 2026-10-13
+
+- Modus 5: neue Option „Zulässiger Netzbezug beim Laden“ (Standard 0 W).
+  Starten, Erhöhen und Senken rechnen mit PV-Überschuss + diesem Wert.
+- Netzbezugsschutz greift erst oberhalb von zulässigem Netzbezug + Toleranz;
+  die bisherige Option heißt jetzt „Netzbezugsschutz: Toleranz über dem
+  zulässigen Netzbezug“ (Standard unverändert 200 W).
+- Neues Sensor-Attribut „Ladebudget inkl. erlaubtem Netzbezug (W)“.
+
 ## Fork 0.9.2 – 2026-10-13
 
 - Optionen „PV-Laderegelung (Modus 5)“: Hilfetexte für alle 14 Parameter mit
