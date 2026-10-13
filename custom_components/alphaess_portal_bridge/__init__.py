@@ -27,6 +27,7 @@ from .const import (
     UPDATE_INTERVAL_OPTIONS,
 )
 from .coordinator import AlphaESSWallboxCoordinator
+from .pv_mode import PVModeManager
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -98,6 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
         coordinator.update_interval = timedelta(seconds=configured_interval)
 
+    coordinator.pv_mode = PVModeManager(hass, entry, coordinator)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     system_serial = entry.data[CONF_SYSTEM_SERIAL]
 
@@ -154,11 +156,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if entry.title != desired_title:
         hass.config_entries.async_update_entry(entry, title=desired_title)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await coordinator.pv_mode.async_start()
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload the portal session."""
+    coordinator = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if coordinator is not None:
+        coordinator.pv_mode.stop()
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         coordinator = hass.data[DOMAIN].pop(entry.entry_id, None)

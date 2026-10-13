@@ -136,8 +136,38 @@ async def async_setup_entry(
             ),
             AlphaESSWallboxInformationSensor(coordinator, entry, "Software", "softwareVersion"),
             AlphaESSWallboxInformationSensor(coordinator, entry, "Hardware", "hardwareVersion"),
+            AlphaESSPVControlSensor(coordinator, entry),
         ]
     )
+
+
+class AlphaESSPVControlSensor(AlphaESSWallboxEntity, SensorEntity):
+    """State of the HA charging mode 5 controller."""
+
+    _attr_name = "PV-Laderegelung"
+    _attr_icon = "mdi:solar-power-variant"
+
+    def __init__(self, coordinator: AlphaESSWallboxCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "pv_control")
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.coordinator.pv_mode.add_listener(self.async_write_ha_state)
+        )
+
+    @property
+    def available(self) -> bool:
+        """Stay visible so portal outages are shown as controller state."""
+        return True
+
+    @property
+    def native_value(self) -> str:
+        return self.coordinator.pv_mode.status()
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return self.coordinator.pv_mode.attributes()
 
 
 class AlphaESSSettingsWriteStatusSensor(AlphaESSWallboxEntity, SensorEntity):

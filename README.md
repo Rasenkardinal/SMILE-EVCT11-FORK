@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.8.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.9.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -61,17 +61,25 @@ Der Wallbox-Leistungssensor ist bereits in der Integration enthalten. Die
 Auswahl speichert die Entity-IDs, implementiert aber noch keine automatische
 Aufzeichnung oder PV-Laderegelung.
 
-Ab **0.8.0** sind die Integrationsoptionen sind
+Ab **0.8.0** sind die Integrationsoptionen
 als Menü aufgebaut. Neben Intervall und Sensoren gibt es die Bereiche
 **PV-Laderegelung (Modus 5)** mit vorbelegten Regelungsparametern und
 **Fahrzeugprofile** zum Hinzufügen, Bearbeiten und Löschen von Fahrzeugen mit
 eigener Ladeleistungstabelle (1-/3-phasig, 6–15 A) sowie instabilen und
-ausgeschlossenen Stufen. Die Werte werden nur gespeichert; die Regelung ist
-noch nicht implementiert. Details: `docs/modus-5-pv-eigenverbrauch-design.md`.
+ausgeschlossenen Stufen. Details: `docs/modus-5-pv-eigenverbrauch-design.md`.
 
-Die Fork-Version **0.8.0** wird als GitHub-Release **`v0.8.0`** für HACS
-bereitgestellt. Sie ergänzt Fahrzeugprofile und vorbelegte Parameter für die
-geplante PV-Laderegelung (Modus 5) in den Integrationsoptionen.
+Ab **0.9.0** gibt es im Select „Lademodus“ bei G2T
+zusätzlich **PV-Eigenverbrauch (Modus 5)**. Home Assistant regelt dann Phasen
+und Ladestrom nach dem PV-Überschuss und dem aktiven Fahrzeugprofil
+(Direkt- oder Stufenregelung). Pausen, SOC-Schutz und Sensorfehler laufen über
+AlphaESS-Modus 1. Der Sensor **PV-Laderegelung** zeigt Zustand, Mittelwerte
+und die letzte Aktion. Voraussetzung: PV-, Hauslast-, Netz- und SOC-Sensor
+in den Optionen ausgewählt. Die Regelung ist eine erste Fassung und im
+Praxisbetrieb noch nicht erprobt.
+
+Die Fork-Version **0.9.0** wird als GitHub-Release **`v0.9.0`** für HACS
+bereitgestellt. Sie ergänzt die erste PV-Laderegelung (Modus 5) mit
+Direkt- und Stufenregelung; insgesamt bestehen **112 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.

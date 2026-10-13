@@ -1,7 +1,7 @@
 # HA-Lademodus 5: PV-Eigenverbrauch und Fahrzeugladung
 
-**Status:** Anforderungs- und Designentwurf, noch nicht implementiert
-**Stand:** 11.10.2026
+**Status:** Erste Regelung umgesetzt (Abschnitt 5.2), Praxistest ausstehend
+**Stand:** 13.10.2026
 **Zielintegration:** AlphaESS Wallbox Bridge, G2T-Wallbox
 
 ## 1. Projektziel
@@ -211,6 +211,10 @@ Folgerungen für den Entwurf:
 
 ### 4.1 Netzflussregelung
 
+> Umgesetzt wurde stattdessen die Bilanzregelung aus Abschnitt 3.5
+> (PV − Hauslast ohne Wallbox); der Netzfluss dient nur noch als
+> Bezugsschutz. Details in Abschnitt 5.2.
+
 Primäre Grundlage ist ein **konfigurierbarer gleitender Durchschnitt des
 Netzflusses mit Hysterese**. Der Regler soll den Netzfluss nahe einem
 konfigurierbaren Zielbereich um möglichst geringe Einspeisung halten und
@@ -380,6 +384,7 @@ Standardwerte der Regelungsparameter:
 | Wartezeit nach Stromänderung | 60 s | 30–600 s | Messzyklus (Reaktion 25–29 s + Einschwingen) |
 | Wartezeit nach Phasenwechsel | 90 s | 30–600 s | Messzyklus (Pause 35–45 s + 10–15 s) |
 | Zulässiger mittlerer Netzbezug | 200 W | 0–5.000 W | vorläufiger Vorschlag |
+| Netzbezugsschutz greift nach | 30 s | 10–300 s | vorläufiger Vorschlag |
 | Überschussreserve vor Erhöhung | 200 W | 0–3.000 W | vorläufiger Vorschlag |
 | Mindest-SOC Hausakku | 20 % | 0–100 % | vorläufiger Vorschlag |
 | SOC-Hysterese für Wiederanlauf | 5 % | 1–50 % | vorläufiger Vorschlag |
@@ -389,7 +394,65 @@ Standardwerte der Regelungsparameter:
 Die Überschussreserve bedeutet: erhöhen nur, wenn der Überschuss die
 Mehrleistung der nächsten Stufe um diesen Wert übersteigt.
 
+### 5.2 Umgesetzte Regelung (erste Version)
+
+Die erste Fassung ist umgesetzt in `pv_control.py` (Entscheidungslogik ohne
+Home-Assistant-Abhängigkeit, mit Simulationstests) und `pv_mode.py` (Anbindung
+an Home Assistant). Sie legt die offenen Punkte aus Abschnitt 6 vorläufig so
+fest:
+
+- **Bedienung:** Das Select „Lademodus“ bietet bei G2T zusätzlich
+  „PV-Eigenverbrauch (Modus 5)“. Die Absicht „Modus 5 aktiv“ wird als Option
+  `pv_mode_active` gespeichert und überlebt Neustarts. Wählt man einen anderen
+  Modus, wird Modus 5 beendet und der gewählte AlphaESS-Modus geschrieben.
+  Aktivierung nur bei G2T und wenn PV-Leistung, Hauslast, Netzfluss und
+  Hausakku-SOC ausgewählt sind; der Batterieleistungssensor ist optional.
+- **Regelgröße (statt Netzfluss, siehe 3.5):**
+  verfügbar für die Wallbox = PV Ø − (Hauslast Ø − Wallbox Ø). Die
+  Wallbox-Leistung wird in Modus 4 aus der Profiltabelle der aktuellen Stufe
+  geschätzt (nur bei Status „Charging“), in Modus 1 aus der Cloud-Leistung.
+- **Mittelwert:** Abtastung alle 5 s, gleitendes Fenster nach Zeit
+  (Standard 120 s, bei instabilen Stufen 240 s). Die erste Entscheidung fällt
+  erst nach einem vollen Fenster. Nach jedem Befehl werden alle Messwerte
+  verworfen und die Wartezeit (Strom 60 s, Phasenwechsel oder Wechsel
+  von/zu Modus 1: 90 s) abgewartet.
+- **Erhöhen:** auf eine Stufe, deren Tabellenleistung ≤ verfügbar −
+  Überschussreserve ist. **Senken:** sobald die Leistung der aktuellen Stufe
+  über dem verfügbaren Wert liegt. Dazwischen bleibt die Stufe (Totband =
+  Reserve); in diesem Bereich deckt der Hausakku kleine Lücken.
+- **Direktregelung:** fährt die höchste passende Stufe in einem Befehl an;
+  **Stufenregelung:** eine Stufe pro Entscheidung.
+- **Stufenleiter:** ausgeschlossene Stufen entfallen; einphasige Stufen nur
+  unterhalb der kleinsten nutzbaren dreiphasigen Stufe.
+- **Pause:** Reicht der Überschuss für keine Stufe, wird AlphaESS-Modus 1
+  geschrieben (kein START/STOP). Modus 1 dient auch als SOC-Schutz und
+  Sensor-Fallback.
+- **Netzbezugsschutz:** liegt der Netzbezug-Mittelwert nach der einstellbaren
+  Zeit (Standard 30 s, höchstens der Mittelungszeitraum) über der Grenze,
+  wird sofort reduziert (direkt: um die Überschreitung;
+  Stufe: eine Stufe), ohne das volle Fenster abzuwarten.
+- **SOC-Schutz:** unter Mindest-SOC sofort Modus 1; Rückkehr erst ab
+  Mindest-SOC + Hysterese.
+- **Sensorfehler:** fehlend, `unknown`/`unavailable`, nicht numerisch oder bei
+  Leistungssensoren älter als die eingestellte Zeit (geprüft über
+  `last_reported`, ersatzweise `last_updated`) → Modus 1. Rückkehr nach der
+  eingestellten Zeit mit durchgehend gültigen Werten. Der SOC wird nur auf
+  Gültigkeit geprüft, weil er sich selten ändert.
+- **Zeitgesteuertes Laden aktiv / kein Fahrzeug:** keine Befehle.
+- **Diagnose:** Sensor „PV-Laderegelung“ mit Zustand (z. B. „Mittelwert wird
+  gebildet“, „Regelung aktiv“, „Warten auf Überschuss“, „Warten auf
+  Wallbox-Reaktion“, „SOC-Schutz“, „Fallback Sensorfehler“) und Attributen
+  für Mittelwerte, verfügbare Leistung, aktuelle und Zielstufe, Fahrzeugprofil,
+  Regelungsart und letzte Aktion.
+- Manuelle Strom- oder Phasenänderungen während Modus 5 werden bei der
+  nächsten Entscheidung überschrieben. Die Hausakku-Sperre (4.4) ist nicht
+  Bestandteil dieser Version.
+
 ## 6. Offene Punkte vor Implementierungsbeginn
+
+> Abschnitt 5.2 legt die meisten dieser Punkte vorläufig fest. Offen bleiben
+> die Hausakku-Sperre, der Praxistest von Modus 1 als Pause sowie
+> Fahrzeugwechsel und externe Änderungen über App oder Portal.
 
 Die folgenden Details sind noch nicht festgelegt:
 

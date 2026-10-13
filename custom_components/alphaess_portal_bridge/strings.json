@@ -54,7 +54,7 @@
       },
       "control": {
         "title": "PV charging control (mode 5)",
-        "description": "Settings for the planned HA charging mode 5. The control itself is not active yet. Defaults are based on the measurement cycle of 2026-10-13; power limits and battery values are provisional proposals.",
+        "description": "Settings for HA charging mode 5, activated via the charging mode select option \"PV-Eigenverbrauch (Modus 5)\". Defaults are based on the measurement cycle of 2026-10-13; power limits and battery values are provisional proposals.",
         "data": {
           "active_vehicle_profile": "Active vehicle",
           "control_strategy": "Control strategy",
@@ -63,6 +63,7 @@
           "current_change_wait_seconds": "Wait after current change",
           "phase_change_wait_seconds": "Wait after phase change",
           "grid_import_limit_w": "Permitted average grid import",
+          "grid_import_protection_seconds": "Grid import protection reacts after",
           "surplus_reserve_w": "Surplus reserve before increasing",
           "min_battery_soc": "Minimum home battery SOC",
           "battery_soc_hysteresis": "SOC hysteresis for restart",
@@ -74,7 +75,8 @@
           "unstable_average_window_seconds": "Used while a stage marked unstable is active, so that power oscillation does not trigger further changes.",
           "current_change_wait_seconds": "Measured: the wallbox reacts about 25–29 s after the command.",
           "phase_change_wait_seconds": "Measured: charging pauses about 35–45 s after the command for 10–15 s.",
-          "surplus_reserve_w": "Increase only if the surplus exceeds the additional power of the next stage by this amount."
+          "surplus_reserve_w": "Increase only if the surplus exceeds the additional power of the next stage by this amount.",
+          "grid_import_protection_seconds": "If the average grid import stays above the limit for this long, power is reduced immediately without waiting for the full averaging window. At most the averaging window."
         }
       },
       "vehicles": {

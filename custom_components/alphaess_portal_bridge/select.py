@@ -15,7 +15,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import AuthenticationError, PortalConnectionError
-from .const import DOMAIN
+from .const import DOMAIN, PV_MODE_OPTION
 from .coordinator import AlphaESSWallboxCoordinator
 from .entity import (
     G1_MODES,
@@ -57,7 +57,9 @@ class AlphaESSWallboxModeSelect(AlphaESSWallboxEntity, SelectEntity):
     @property
     def options(self) -> list[str]:
         generation, _ = settings_object(self.coordinator)
-        return list(G2_MODES if generation == "g2T" else G1_MODES)
+        if generation == "g2T":
+            return [*G2_MODES, PV_MODE_OPTION]
+        return list(G1_MODES)
 
     @property
     def available(self) -> bool:
@@ -69,15 +71,36 @@ class AlphaESSWallboxModeSelect(AlphaESSWallboxEntity, SelectEntity):
     @property
     def current_option(self) -> str | None:
         generation, settings = settings_object(self.coordinator)
+        if generation == "g2T" and self.coordinator.pv_mode.active:
+            return PV_MODE_OPTION
         modes = G2_MODES if generation == "g2T" else G1_MODES
         value = settings.get("chargeMode")
         return next((name for name, mode in modes.items() if mode == value), None)
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str]:
+        if not self.coordinator.pv_mode.active:
+            return {}
+        return {
+            "Hinweis": (
+                "Modus 5 ist eine Regelung von Home Assistant. Im AlphaESS-Portal "
+                "erscheint je nach Lage Modus 4 (geregelte Stufe) oder Modus 1 "
+                "(Pause, SOC-Schutz oder Sensorfehler)."
+            )
+        }
+
     async def async_select_option(self, option: str) -> None:
+        pv_mode = self.coordinator.pv_mode
+        if option == PV_MODE_OPTION:
+            await pv_mode.async_activate()
+            self.async_write_ha_state()
+            return
         generation, _ = settings_object(self.coordinator)
         modes = G2_MODES if generation == "g2T" else G1_MODES
         if option not in modes:
             raise HomeAssistantError("Unbekannter Lademodus")
+        await pv_mode.async_deactivate()
+        self.async_write_ha_state()
         try:
             await self.coordinator.api.async_update_wallbox_settings(charge_mode=modes[option])
         except (AuthenticationError, PortalConnectionError, ValueError) as err:

@@ -24,7 +24,7 @@ CONTROL_STRATEGY_STEP = "step"
 CONTROL_STRATEGY_DIRECT = "direct"
 CONTROL_STRATEGIES = (CONTROL_STRATEGY_STEP, CONTROL_STRATEGY_DIRECT)
 
-# Settings for the planned HA charging mode 5, keyed by option name:
+# Settings for HA charging mode 5, keyed by option name:
 # (default, minimum, maximum, step, unit). Defaults are derived from the
 # measurement cycle of 2026-10-13 or proposed in docs/modus-5-...-design.md.
 CONTROL_NUMBER_SETTINGS: dict[str, tuple[int, int, int, int, str]] = {
@@ -33,6 +33,7 @@ CONTROL_NUMBER_SETTINGS: dict[str, tuple[int, int, int, int, str]] = {
     "current_change_wait_seconds": (60, 30, 600, 5, "s"),
     "phase_change_wait_seconds": (90, 30, 600, 5, "s"),
     "grid_import_limit_w": (200, 0, 5000, 50, "W"),
+    "grid_import_protection_seconds": (30, 10, 300, 5, "s"),
     "surplus_reserve_w": (200, 0, 3000, 50, "W"),
     "min_battery_soc": (20, 0, 100, 1, "%"),
     "battery_soc_hysteresis": (5, 1, 50, 1, "%"),
@@ -40,6 +41,10 @@ CONTROL_NUMBER_SETTINGS: dict[str, tuple[int, int, int, int, str]] = {
     "sensor_recovery_seconds": (30, 10, 600, 5, "s"),
 }
 DEFAULT_CONTROL_STRATEGY = CONTROL_STRATEGY_STEP
+# Persisted user intent "HA mode 5 active"; kept separate from the AlphaESS
+# mode actually written to the portal so fallbacks can return automatically.
+CONF_PV_MODE_ACTIVE = "pv_mode_active"
+PV_MODE_OPTION = "PV-Eigenverbrauch (Modus 5)"
 DEFAULT_UPDATE_INTERVAL_SECONDS = 120
 DEFAULT_G2T_UPDATE_INTERVAL_SECONDS = 30
 UPDATE_INTERVAL_MIN_SECONDS = 5

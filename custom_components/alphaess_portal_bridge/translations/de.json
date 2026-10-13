@@ -54,7 +54,7 @@
       },
       "control": {
         "title": "PV-Laderegelung (Modus 5)",
-        "description": "Einstellungen für den geplanten HA-Lademodus 5. Die Regelung selbst ist noch nicht aktiv. Die Standardwerte beruhen auf dem Messzyklus vom 13.10.2026; Leistungsgrenzen und Hausakku-Werte sind vorläufige Vorschläge.",
+        "description": "Einstellungen für HA-Lademodus 5. Aktiviert wird er im Select „Lademodus“ über „PV-Eigenverbrauch (Modus 5)“. Die Standardwerte beruhen auf dem Messzyklus vom 13.10.2026; Leistungsgrenzen und Hausakku-Werte sind vorläufige Vorschläge.",
         "data": {
           "active_vehicle_profile": "Aktives Fahrzeug",
           "control_strategy": "Regelungsart",
@@ -63,6 +63,7 @@
           "current_change_wait_seconds": "Wartezeit nach Stromänderung",
           "phase_change_wait_seconds": "Wartezeit nach Phasenwechsel",
           "grid_import_limit_w": "Zulässiger mittlerer Netzbezug",
+          "grid_import_protection_seconds": "Netzbezugsschutz greift nach",
           "surplus_reserve_w": "Überschussreserve vor Erhöhung",
           "min_battery_soc": "Mindest-SOC Hausakku",
           "battery_soc_hysteresis": "SOC-Hysterese für Wiederanlauf",
@@ -74,7 +75,8 @@
           "unstable_average_window_seconds": "Gilt, solange eine als instabil markierte Stufe aktiv ist, damit das Pendeln keine weiteren Wechsel auslöst.",
           "current_change_wait_seconds": "Gemessen: Die Wallbox reagiert ca. 25–29 s nach dem Befehl.",
           "phase_change_wait_seconds": "Gemessen: Die Ladung pausiert ca. 35–45 s nach dem Befehl für 10–15 s.",
-          "surplus_reserve_w": "Erhöhen nur, wenn der Überschuss die Mehrleistung der nächsten Stufe um diesen Wert übersteigt."
+          "surplus_reserve_w": "Erhöhen nur, wenn der Überschuss die Mehrleistung der nächsten Stufe um diesen Wert übersteigt.",
+          "grid_import_protection_seconds": "Liegt der mittlere Netzbezug so lange über der Grenze, wird sofort gesenkt, ohne den vollen Mittelungszeitraum abzuwarten. Höchstens so lang wie der Mittelungszeitraum."
         }
       },
       "vehicles": {

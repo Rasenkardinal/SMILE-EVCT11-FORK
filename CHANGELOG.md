@@ -1,5 +1,17 @@
 # Changelog
 
+## Fork 0.9.0 – 2026-10-13
+
+- Lademodus „PV-Eigenverbrauch (Modus 5)“ im Select „Lademodus“ (nur G2T):
+  Home Assistant regelt Phasen und Ladestrom nach dem PV-Überschuss
+  (PV − Hauslast ohne Wallbox, gleitender Mittelwert) anhand des aktiven
+  Fahrzeugprofils. Direktregelung und Stufenregelung wählbar.
+- Pause, SOC-Schutz und Sensor-Fallback über AlphaESS-Modus 1; Netzbezugsschutz
+  nach einstellbarer Zeit (Standard 30 s); Wartezeiten nach Strom- und Phasenwechseln.
+- Neuer Sensor „PV-Laderegelung“ mit Zustand, Mittelwerten, Ziel- und
+  aktueller Stufe und letzter Aktion.
+- Modus 5 bleibt nach einem Neustart aktiv; insgesamt 112 automatisierte Tests.
+
 ## Fork 0.8.0 – 2026-10-13
 
 - Integrationsoptionen als Menü: Intervall und Sensoren, PV-Laderegelung

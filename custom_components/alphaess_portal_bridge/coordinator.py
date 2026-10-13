@@ -11,7 +11,7 @@ import logging
 import time
 from collections.abc import Callable
 from datetime import timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
@@ -20,12 +20,18 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .api import AlphaESSPortalApi, AuthenticationError, PortalConnectionError
 from .const import DEFAULT_UPDATE_INTERVAL_SECONDS, DOMAIN, UPDATE_INTERVAL_OPTIONS
 
+if TYPE_CHECKING:
+    from .pv_mode import PVModeManager
+
 _LOGGER = logging.getLogger(__name__)
 _POST_WRITE_READBACK_SECONDS = 3
 
 
 class AlphaESSWallboxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Fetch the current wallbox state from the AlphaESS customer portal."""
+
+    # Attached in async_setup_entry right after construction.
+    pv_mode: PVModeManager
 
     def __init__(
         self,
