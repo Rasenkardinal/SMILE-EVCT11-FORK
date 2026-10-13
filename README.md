@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.7.8 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.7.9 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -52,12 +52,18 @@ wurde durch diesen Fork nicht implementiert.
   Bedeutung des Portal-Sollwerts oder die Reaktionszeit der Wallbox.
 - Ein Regressionstest prüft den Slider-Modus, die Grenzen und Schrittweite
   sowie die unveränderten Eingabemodi der anderen Zahlenfelder.
-  Mit den bisherigen Änderungen bestehen insgesamt **74 automatisierte Tests**;
+  Mit den bisherigen Änderungen bestehen insgesamt **77 automatisierte Tests**;
   eine Prüfung der Darstellung im eigenen Home Assistant steht noch aus.
 
-Die Fork-Version **0.7.8** wird als GitHub-Release **`v0.7.8`** für HACS
-bereitgestellt. Sie ermöglicht ein Cloud-Aktualisierungsintervall ab
-5 Sekunden; die bisherigen Profil-Standardwerte bleiben unverändert.
+Ab **0.7.9** können in den Integrationsoptionen Sensoren für PV-Leistung,
+Hausakku-SOC, Hauslast, Netzfluss und Batterieleistung ausgewählt werden.
+Der Wallbox-Leistungssensor ist bereits in der Integration enthalten. Die
+Auswahl speichert die Entity-IDs, implementiert aber noch keine automatische
+Aufzeichnung oder PV-Laderegelung.
+
+Die Fork-Version **0.7.9** wird als GitHub-Release **`v0.7.9`** für HACS
+bereitgestellt. Sie ergänzt die Auswahl der lokalen Überwachungssensoren in
+den Integrationsoptionen.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.

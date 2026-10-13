@@ -14,6 +14,8 @@ from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
+    EntitySelector,
+    EntitySelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -21,7 +23,12 @@ from homeassistant.helpers.selector import (
 
 from .api import AlphaESSPortalApi, AuthenticationError, PortalConnectionError
 from .const import (
+    CONF_BATTERY_POWER_ENTITY,
+    CONF_BATTERY_SOC_ENTITY,
+    CONF_GRID_POWER_ENTITY,
+    CONF_HOUSEHOLD_POWER_ENTITY,
     CONF_PASSWORD,
+    CONF_PV_POWER_ENTITY,
     CONF_SYSTEM_SERIAL,
     CONF_UPDATE_INTERVAL,
     CONF_USERNAME,
@@ -128,31 +135,49 @@ def _default_update_interval(hass: Any, entry: config_entries.ConfigEntry) -> in
 
 
 class AlphaESSPortalBridgeOptionsFlow(config_entries.OptionsFlowWithReload):
-    """Configure the portal refresh interval without changing credentials."""
+    """Configure refresh interval and monitoring sensors."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            options = dict(self.config_entry.options)
+            options.update(user_input)
+            return self.async_create_entry(title="", data=options)
 
         current_interval = self.config_entry.options.get(CONF_UPDATE_INTERVAL)
         if current_interval not in UPDATE_INTERVAL_OPTIONS:
             current_interval = _default_update_interval(self.hass, self.config_entry)
+        current_options = self.config_entry.options
+        sensor_entities = (
+            CONF_PV_POWER_ENTITY,
+            CONF_BATTERY_SOC_ENTITY,
+            CONF_HOUSEHOLD_POWER_ENTITY,
+            CONF_GRID_POWER_ENTITY,
+            CONF_BATTERY_POWER_ENTITY,
+        )
+        schema: dict[Any, Any] = {
+            vol.Required(
+                CONF_UPDATE_INTERVAL,
+                default=current_interval,
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=min(UPDATE_INTERVAL_OPTIONS),
+                    max=max(UPDATE_INTERVAL_OPTIONS),
+                    step=UPDATE_INTERVAL_STEP_SECONDS,
+                    unit_of_measurement="s",
+                    mode=NumberSelectorMode.BOX,
+                )
+            ),
+        }
+        for entity_key in sensor_entities:
+            saved_entity = current_options.get(entity_key)
+            field = (
+                vol.Optional(entity_key, default=saved_entity)
+                if saved_entity
+                else vol.Optional(entity_key)
+            )
+            schema[field] = EntitySelector(EntitySelectorConfig(domain="sensor"))
+
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_UPDATE_INTERVAL,
-                        default=current_interval,
-                    ): NumberSelector(
-                        NumberSelectorConfig(
-                            min=min(UPDATE_INTERVAL_OPTIONS),
-                            max=max(UPDATE_INTERVAL_OPTIONS),
-                            step=UPDATE_INTERVAL_STEP_SECONDS,
-                            unit_of_measurement="s",
-                            mode=NumberSelectorMode.BOX,
-                        )
-                    ),
-                }
-            ),
+            data_schema=vol.Schema(schema),
         )

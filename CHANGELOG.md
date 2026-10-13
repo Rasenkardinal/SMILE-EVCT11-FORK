@@ -1,5 +1,14 @@
 # Changelog
 
+## Fork 0.7.9 – 2026-10-13
+
+- Sensor-Entitäten für PV-Leistung, Hausakku-SOC, Hauslast, Netzfluss und
+  Batterieleistung in den Integrationsoptionen auswählbar machen.
+- Bestehende Sensorzuordnungen beim Ändern anderer Optionen erhalten.
+- Wallbox-Leistung bleibt über den vorhandenen Integrationssensor verfügbar.
+- Regressionstests für Optionsfelder und Übersetzungen ergänzen; insgesamt
+  77 automatisierte Tests bestanden.
+
 ## Fork 0.7.8 – 2026-10-12
 
 - Mindestintervall für Cloud-Aktualisierungen von 30 auf 5 Sekunden senken.
