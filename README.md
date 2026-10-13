@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.11.1 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.11.2 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -94,8 +94,8 @@ Netzbezugsschutz greift erst oberhalb dieses Werts plus Toleranz. Ab
 **0.11.0** lässt sich der Wert zusätzlich über den Slider „Zulässiges Defizit“
 (0–5.000 W) einstellen; er wirkt sofort ohne Neuladen der Integration.
 
-Die Fork-Version **0.11.1** wird als GitHub-Release **`v0.11.1`** für HACS
-bereitgestellt. Sie verkürzt den Anzeigenamen der Slider-Entität auf „Zulässiges Defizit“; insgesamt
+Die Fork-Version **0.11.2** wird als GitHub-Release **`v0.11.2`** für HACS
+bereitgestellt. Sie deaktiviert den Gerätenamen-Präfix für die Slider-Entität („Zulässiges Defizit“); insgesamt
 bestehen **119 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 

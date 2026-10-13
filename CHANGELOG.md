@@ -1,5 +1,11 @@
 # Changelog
 
+## Fork 0.11.2 – 2026-10-13
+
+- Slider-Entität: `has_entity_name = False` gesetzt, sodass Home Assistant
+  keinen Gerätenamen voranstellt und die Entität im Dashboard exakt als
+  „Zulässiges Defizit“ erscheint.
+
 ## Fork 0.11.1 – 2026-10-13
 
 - Slider-Entität: Anzeigename von „Zulässiges Defizit beim Laden“ auf
