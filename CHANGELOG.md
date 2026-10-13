@@ -1,5 +1,12 @@
 # Changelog
 
+## Fork 0.11.5 – 2026-10-13
+
+- Entitäten an Modus 5 gekoppelt: Der Slider „Zulässiges Defizit“ und der
+  Sensor „PV-Laderegelung“ sind nur noch aktiv (verfügbar), wenn im
+  Lademodus-Select „PV-Eigenverbrauch (Modus 5)“ ausgewählt ist. In anderen
+  Lademodi werden sie als nicht verfügbar angezeigt.
+
 ## Fork 0.11.4 – 2026-10-13
 
 - Dokumentations-Verlinkung (Fragezeichen im HA-Menü) und Issue-Tracker in

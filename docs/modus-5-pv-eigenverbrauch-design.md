@@ -402,10 +402,12 @@ Entscheidungen (Starten, Erhöhen, Senken) rechnen mit dem Ladebudget
 Der Netzbezugsschutz misst weiterhin den Netzbezug und greift erst oberhalb
 von X + Toleranz. Mit X = 0 gilt das bisherige Verhalten.
 
-X lässt sich zusätzlich über die Slider-Entität „Zulässiges Defizit beim
-Laden“ (Kategorie Konfiguration) ändern. Der Slider schreibt dieselbe Option,
+X lässt sich zusätzlich über die Slider-Entität „Zulässiges Defizit“
+(Kategorie Konfiguration) ändern. Der Slider schreibt dieselbe Option,
 lädt die Integration aber nicht neu: Die laufende Regelung übernimmt den Wert
 ab der nächsten Entscheidung, die gebildeten Mittelwerte bleiben erhalten.
+Sowohl der Slider als auch der Sensor „PV-Laderegelung“ sind nur verfügbar
+(aktiv), wenn Modus 5 im Lademodus-Select ausgewählt ist.
 
 ### 5.2 Umgesetzte Regelung (erste Version)
 

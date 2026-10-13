@@ -158,8 +158,8 @@ class AlphaESSPVControlSensor(AlphaESSWallboxEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        """Stay visible so portal outages are shown as controller state."""
-        return True
+        """Only available when charging mode 5 is selected."""
+        return self.coordinator.pv_mode.active
 
     @property
     def native_value(self) -> str:

@@ -303,6 +303,46 @@ class TesterFeedbackScheduleTests(unittest.TestCase):
         self.assertIn("Soll-Ladestrom", attrs["Hinweis"])
         self.assertIn("Live-Leistung", attrs["Hinweis"])
 
+    def test_mode5_entities_available_only_when_pv_mode_active(self):
+        source_number = ast.parse((COMPONENT / "number.py").read_text(encoding="utf-8"))
+        cls_node = next(
+            node for node in source_number.body
+            if isinstance(node, ast.ClassDef) and node.name == "AlphaESSAllowedDeficitNumber"
+        )
+        ns_number = {
+            "AlphaESSWallboxEntity": type("AlphaESSWallboxEntity", (), {}),
+            "NumberEntity": type("NumberEntity", (), {}),
+            "NumberMode": SimpleNamespace(SLIDER="slider"),
+            "UnitOfPower": SimpleNamespace(WATT="W"),
+            "EntityCategory": SimpleNamespace(CONFIG="config"),
+        }
+        module = ast.fix_missing_locations(ast.Module(body=[cls_node], type_ignores=[]))
+        exec(compile(module, "number.py", "exec"), ns_number)
+        deficit_cls = ns_number["AlphaESSAllowedDeficitNumber"]
+
+        source_sensor = ast.parse((COMPONENT / "sensor.py").read_text(encoding="utf-8"))
+        sensor_node = next(
+            node for node in source_sensor.body
+            if isinstance(node, ast.ClassDef) and node.name == "AlphaESSPVControlSensor"
+        )
+        ns_sensor = {
+            "AlphaESSWallboxEntity": type("AlphaESSWallboxEntity", (), {}),
+            "SensorEntity": type("SensorEntity", (), {}),
+        }
+        module_s = ast.fix_missing_locations(ast.Module(body=[sensor_node], type_ignores=[]))
+        exec(compile(module_s, "sensor.py", "exec"), ns_sensor)
+        sensor_cls = ns_sensor["AlphaESSPVControlSensor"]
+
+        deficit_entity = deficit_cls.__new__(deficit_cls)
+        sensor_entity = sensor_cls.__new__(sensor_cls)
+
+        for active in (False, True):
+            coord = SimpleNamespace(pv_mode=SimpleNamespace(active=active))
+            deficit_entity.coordinator = coord
+            sensor_entity.coordinator = coord
+            self.assertIs(deficit_entity.available, active)
+            self.assertIs(sensor_entity.available, active)
+
 
 if __name__ == "__main__":
     unittest.main()

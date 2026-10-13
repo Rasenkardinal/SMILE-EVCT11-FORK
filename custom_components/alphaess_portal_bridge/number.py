@@ -59,8 +59,8 @@ class AlphaESSAllowedDeficitNumber(AlphaESSWallboxEntity, NumberEntity):
 
     @property
     def available(self) -> bool:
-        """A local setting that does not depend on the portal."""
-        return True
+        """Only available when charging mode 5 is selected."""
+        return self.coordinator.pv_mode.active
 
     @property
     def native_value(self) -> float:
