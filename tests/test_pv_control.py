@@ -254,6 +254,62 @@ class WaitAndWindowTests(unittest.TestCase):
         self.assertEqual(controller.state, pc.STATE_NO_VEHICLE)
 
 
+class ReactionDetectionTests(unittest.TestCase):
+    BASE = 500.0
+
+    def prepare(self, previous_key, target_key, **changes):
+        """Feed 20 s at the previous stage, then finish a command at t=20."""
+        controller = pc.PVController(PROFILE, settings("direct", **changes))
+        phases, current = (int(x) for x in previous_key.split("_"))
+        wb = wallbox(phases=phases, current=current)
+        previous = controller.current_stage(wb)
+        house = self.BASE + previous.power
+        for t in range(0, 21, 5):
+            controller.update(t, pc.Measurement(pv=20000, house=house, soc=60), wb)
+        target = next(x for x in controller.ladder if x.key == target_key)
+        controller.command_finished(20, pc.Command(target, "test"), previous, True)
+        new_wb = wallbox(phases=target.phases, current=target.current)
+        return controller, previous, target, new_wb
+
+    def feed(self, controller, wb, start, end, house):
+        for t in range(start, end + 1, 5):
+            controller.update(t, pc.Measurement(pv=20000, house=house, soc=60), wb)
+
+    def test_wait_ends_once_house_load_reached_expected_level(self):
+        controller, previous, target, wb = self.prepare("3_6", "3_10")
+        self.assertAlmostEqual(controller.expected_house_w, self.BASE + target.power)
+        self.feed(controller, wb, 25, 45, self.BASE + previous.power)
+        self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
+        # Wallbox reacts at t=50; confirmed after 10 s at t=60 (40 s after command).
+        self.feed(controller, wb, 50, 60, self.BASE + target.power + 150)
+        self.assertNotEqual(controller.state, pc.STATE_WAITING_WALLBOX)
+        self.assertEqual(controller.reaction_seconds, 40)
+
+    def test_unrelated_consumer_keeps_full_wait(self):
+        controller, previous, _, wb = self.prepare("3_6", "3_10")
+        # A 2 kW consumer switches on instead of the wallbox reacting.
+        self.feed(controller, wb, 25, 75, self.BASE + previous.power + 2000)
+        self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
+        self.feed(controller, wb, 80, 80, self.BASE + previous.power + 2000)
+        self.assertNotEqual(controller.state, pc.STATE_WAITING_WALLBOX)
+        self.assertIsNone(controller.reaction_seconds)
+
+    def test_charging_pause_during_phase_change_is_not_a_reaction(self):
+        controller, _, target, wb = self.prepare("3_8", "1_6")
+        # Charging pauses (wallbox 0 W) for 15 s after the phase change.
+        self.feed(controller, wb, 55, 70, self.BASE)
+        self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
+        self.feed(controller, wb, 75, 85, self.BASE + target.power)
+        self.assertNotEqual(controller.state, pc.STATE_WAITING_WALLBOX)
+        self.assertEqual(controller.reaction_seconds, 65)
+
+    def test_zero_confirmation_time_disables_detection(self):
+        controller, _, target, wb = self.prepare("3_6", "3_10", reaction_confirm_seconds=0)
+        self.assertIsNone(controller.expected_house_w)
+        self.feed(controller, wb, 25, 75, self.BASE + target.power)
+        self.assertEqual(controller.state, pc.STATE_WAITING_WALLBOX)
+
+
 class ConstantsTests(unittest.TestCase):
     def test_settings_fields_match_option_defaults(self):
         fields = set(pc.ControlSettings.__dataclass_fields__) - {"strategy"}

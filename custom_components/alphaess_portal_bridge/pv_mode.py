@@ -299,6 +299,16 @@ class PVModeManager:
                 "Mittelungszeitraum (s)": int(controller.window_seconds),
                 "SOC-Schutz aktiv": controller.soc_lock,
                 "Fallback aktiv": controller.fallback,
+                "Erwartete Hauslast (W)": (
+                    round(controller.expected_house_w)
+                    if controller.expected_house_w is not None
+                    else None
+                ),
+                "Reaktion erkannt nach (s)": (
+                    round(controller.reaction_seconds)
+                    if controller.reaction_seconds is not None
+                    else None
+                ),
             }
         )
         if controller.available_w is not None and controller.averages:

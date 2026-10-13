@@ -64,6 +64,7 @@
           "phase_change_wait_seconds": "Wartezeit nach Phasenwechsel",
           "grid_import_limit_w": "Zulässiger mittlerer Netzbezug",
           "grid_import_protection_seconds": "Netzbezugsschutz greift nach",
+          "reaction_confirm_seconds": "Reaktionserkennung: Bestätigungszeit",
           "surplus_reserve_w": "Überschussreserve vor Erhöhung",
           "min_battery_soc": "Mindest-SOC Hausakku",
           "battery_soc_hysteresis": "SOC-Hysterese für Wiederanlauf",
@@ -76,7 +77,8 @@
           "current_change_wait_seconds": "Gemessen: Die Wallbox reagiert ca. 25–29 s nach dem Befehl.",
           "phase_change_wait_seconds": "Gemessen: Die Ladung pausiert ca. 35–45 s nach dem Befehl für 10–15 s.",
           "surplus_reserve_w": "Erhöhen nur, wenn der Überschuss die Mehrleistung der nächsten Stufe um diesen Wert übersteigt.",
-          "grid_import_protection_seconds": "Liegt der mittlere Netzbezug so lange über der Grenze, wird sofort gesenkt, ohne den vollen Mittelungszeitraum abzuwarten. Höchstens so lang wie der Mittelungszeitraum."
+          "grid_import_protection_seconds": "Liegt der mittlere Netzbezug so lange über der Grenze, wird sofort gesenkt, ohne den vollen Mittelungszeitraum abzuwarten. Höchstens so lang wie der Mittelungszeitraum.",
+          "reaction_confirm_seconds": "Liegt die Hauslast nach einem Befehl so lange stabil im Bereich der erwarteten neuen Last, endet die Wartezeit vorzeitig. Ändern andere Verbraucher die Last, gilt die volle Wartezeit. 0 = aus."
         }
       },
       "vehicles": {

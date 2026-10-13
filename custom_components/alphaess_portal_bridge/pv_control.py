@@ -28,6 +28,7 @@ MODE_SURPLUS = 1
 MODE_CUSTOM = 4
 
 SAMPLE_INTERVAL_SECONDS = 5
+REACTION_TOLERANCE_SHARE = 0.35
 
 STATE_AVERAGING = "Mittelwert wird gebildet"
 STATE_ACTIVE = "Regelung aktiv"
@@ -96,6 +97,7 @@ class ControlSettings:
     phase_change_wait_seconds: float = 90
     grid_import_limit_w: float = 200
     grid_import_protection_seconds: float = 30
+    reaction_confirm_seconds: float = 10
     surplus_reserve_w: float = 200
     min_battery_soc: float = 20
     battery_soc_hysteresis: float = 5
@@ -163,6 +165,12 @@ class PVController:
         self._profile = profile
         self._samples: deque[tuple[float, float, float, float, float]] = deque()
         self._wait_until = 0.0
+        self._command_at = 0.0
+        # (expected house load, tolerance) after the last command.
+        self._reaction: tuple[float, float] | None = None
+        self._reaction_since: float | None = None
+        self.expected_house_w: float | None = None
+        self.reaction_seconds: float | None = None
         self._valid_since: float | None = None
         self.fallback = False
         self.soc_lock = False
@@ -241,6 +249,42 @@ class PVController:
             return self.ladder[index] if index >= 0 else None
         return current
 
+    # -- early end of the settle time -----------------------------------
+    def _clear_reaction(self) -> None:
+        self._reaction = None
+        self._reaction_since = None
+        self.expected_house_w = None
+
+    def _expect_reaction(self, target: Stage) -> None:
+        """Derive the house load expected once the wallbox runs ``target``.
+
+        The band is 35 % of the smaller of power change and target power, so
+        neither the old load nor the charging pause during a phase change
+        (wallbox at 0 W) falls into it. Other consumers that shift the load
+        out of the band simply keep the full settle time.
+        """
+        recent = list(self._samples)[-3:]
+        if not recent:
+            return
+        baseline = sum(sample[2] for sample in recent) / len(recent)
+        delta = target.power - recent[-1][4]
+        tolerance = REACTION_TOLERANCE_SHARE * min(abs(delta), target.power)
+        if tolerance <= 0:
+            return
+        self._reaction = (baseline + delta, tolerance)
+        self.expected_house_w = baseline + delta
+
+    def _reaction_confirmed(self, now: float, house: float) -> bool:
+        if self._reaction is None:
+            return False
+        expected, tolerance = self._reaction
+        if abs(house - expected) > tolerance:
+            self._reaction_since = None
+            return False
+        if self._reaction_since is None:
+            self._reaction_since = now
+        return now - self._reaction_since >= self.settings.reaction_confirm_seconds
+
     def _command_if_changed(
         self, target: Stage | None, current: Stage | None, wallbox: WallboxState, reason: str
     ) -> Command | None:
@@ -264,6 +308,7 @@ class PVController:
 
         if not measurement.valid:
             self._valid_since = None
+            self._reaction_since = None
             self.reset_samples()
             self._set(STATE_FALLBACK, measurement.problem or "")
             self.fallback = True
@@ -287,8 +332,18 @@ class PVController:
             return None
 
         if now < self._wait_until:
-            self._set(STATE_WAITING_WALLBOX, f"noch {int(self._wait_until - now)} s")
-            return None
+            if self._reaction_confirmed(now, measurement.house):
+                self.reaction_seconds = now - self._command_at
+                self._wait_until = now
+                self._clear_reaction()
+            else:
+                reason = f"noch {int(self._wait_until - now)} s"
+                if self._reaction is not None:
+                    reason += f", erwartete Hauslast ca. {self._reaction[0]:.0f} W"
+                self._set(STATE_WAITING_WALLBOX, reason)
+                return None
+        elif self._reaction is not None:
+            self._clear_reaction()
 
         current = self.current_stage(wallbox)
         if current is not None:
@@ -363,8 +418,13 @@ class PVController:
         self, now: float, command: Command, previous: Stage | None, success: bool
     ) -> None:
         """Start the settle time after a command and discard old samples."""
-        self.reset_samples()
         s = self.settings
+        self._command_at = now
+        self.reaction_seconds = None
+        self._clear_reaction()
+        if success and command.stage is not None and s.reaction_confirm_seconds > 0:
+            self._expect_reaction(command.stage)
+        self.reset_samples()
         if not success:
             self._wait_until = now + s.current_change_wait_seconds
             return

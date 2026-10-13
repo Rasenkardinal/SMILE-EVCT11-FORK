@@ -1,5 +1,13 @@
 # Changelog
 
+## Fork 0.9.1 – 2026-10-13
+
+- Modus 5: Die Wartezeit nach einem Befehl endet vorzeitig, sobald die
+  Hauslast die erwartete neue Last stabil erreicht hat (Bestätigungszeit
+  einstellbar, Standard 10 s, 0 = aus). Andere Verbraucher, die die Hauslast
+  verschieben, führen zur vollen Wartezeit. Sensor-Attribute „Erwartete
+  Hauslast (W)“ und „Reaktion erkannt nach (s)“.
+
 ## Fork 0.9.0 – 2026-10-13
 
 - Lademodus „PV-Eigenverbrauch (Modus 5)“ im Select „Lademodus“ (nur G2T):

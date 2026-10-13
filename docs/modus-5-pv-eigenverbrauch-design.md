@@ -385,6 +385,7 @@ Standardwerte der Regelungsparameter:
 | Wartezeit nach Phasenwechsel | 90 s | 30–600 s | Messzyklus (Pause 35–45 s + 10–15 s) |
 | Zulässiger mittlerer Netzbezug | 200 W | 0–5.000 W | vorläufiger Vorschlag |
 | Netzbezugsschutz greift nach | 30 s | 10–300 s | vorläufiger Vorschlag |
+| Reaktionserkennung: Bestätigungszeit | 10 s | 0–60 s (0 = aus) | vorläufiger Vorschlag |
 | Überschussreserve vor Erhöhung | 200 W | 0–3.000 W | vorläufiger Vorschlag |
 | Mindest-SOC Hausakku | 20 % | 0–100 % | vorläufiger Vorschlag |
 | SOC-Hysterese für Wiederanlauf | 5 % | 1–50 % | vorläufiger Vorschlag |
@@ -416,6 +417,18 @@ fest:
   erst nach einem vollen Fenster. Nach jedem Befehl werden alle Messwerte
   verworfen und die Wartezeit (Strom 60 s, Phasenwechsel oder Wechsel
   von/zu Modus 1: 90 s) abgewartet.
+- **Reaktionserkennung:** Beim Befehl auf eine Modus-4-Stufe wird die erwartete
+  Hauslast berechnet: Hauslast Ø der letzten 15 s + (Zielleistung −
+  bisherige Wallbox-Leistung). Liegt die gemessene Hauslast die
+  Bestätigungszeit lang (Standard 10 s) ununterbrochen in einem Band von
+  ±35 % des kleineren Werts aus Leistungsänderung und Zielleistung um diesen
+  Erwartungswert, endet die Wartezeit vorzeitig. Das Band schließt den alten
+  Wert und die Ladepause beim Phasenwechsel aus. Verschieben andere
+  Verbraucher die Hauslast aus dem Band, gilt die volle Wartezeit. Ein
+  zufälliger Treffer durch einen fremden Verbraucher beendet nur das Warten;
+  die Hauslast fließt danach ohnehin korrekt in den neuen Mittelwert ein.
+  Bei kleinen Änderungen (einphasig ±1 A, Band ca. ±80 W) greift die
+  Erkennung meist nicht. Wechsel zu Modus 1 nutzen immer die volle Wartezeit.
 - **Erhöhen:** auf eine Stufe, deren Tabellenleistung ≤ verfügbar −
   Überschussreserve ist. **Senken:** sobald die Leistung der aktuellen Stufe
   über dem verfügbaren Wert liegt. Dazwischen bleibt die Stufe (Totband =

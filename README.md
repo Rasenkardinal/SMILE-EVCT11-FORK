@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.9.0 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.9.1 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -77,9 +77,14 @@ und die letzte Aktion. Voraussetzung: PV-, Hauslast-, Netz- und SOC-Sensor
 in den Optionen ausgewählt. Die Regelung ist eine erste Fassung und im
 Praxisbetrieb noch nicht erprobt.
 
-Die Fork-Version **0.9.0** wird als GitHub-Release **`v0.9.0`** für HACS
-bereitgestellt. Sie ergänzt die erste PV-Laderegelung (Modus 5) mit
-Direkt- und Stufenregelung; insgesamt bestehen **112 automatisierte Tests**.
+Ab **0.9.1** endet die Wartezeit nach einem Befehl vorzeitig, sobald die
+Hauslast die erwartete neue Last stabil erreicht hat (Bestätigungszeit
+einstellbar, Standard 10 s, 0 = aus). Ändern andere Verbraucher die Hauslast,
+gilt die volle Wartezeit.
+
+Die Fork-Version **0.9.1** wird als GitHub-Release **`v0.9.1`** für HACS
+bereitgestellt. Sie ergänzt die Reaktionserkennung für Modus 5; insgesamt
+bestehen **116 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.

@@ -34,6 +34,7 @@ CONTROL_NUMBER_SETTINGS: dict[str, tuple[int, int, int, int, str]] = {
     "phase_change_wait_seconds": (90, 30, 600, 5, "s"),
     "grid_import_limit_w": (200, 0, 5000, 50, "W"),
     "grid_import_protection_seconds": (30, 10, 300, 5, "s"),
+    "reaction_confirm_seconds": (10, 0, 60, 5, "s"),
     "surplus_reserve_w": (200, 0, 3000, 50, "W"),
     "min_battery_soc": (20, 0, 100, 1, "%"),
     "battery_soc_hysteresis": (5, 1, 50, 1, "%"),

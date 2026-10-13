@@ -64,6 +64,7 @@
           "phase_change_wait_seconds": "Wait after phase change",
           "grid_import_limit_w": "Permitted average grid import",
           "grid_import_protection_seconds": "Grid import protection reacts after",
+          "reaction_confirm_seconds": "Reaction detection: confirmation time",
           "surplus_reserve_w": "Surplus reserve before increasing",
           "min_battery_soc": "Minimum home battery SOC",
           "battery_soc_hysteresis": "SOC hysteresis for restart",
@@ -76,7 +77,8 @@
           "current_change_wait_seconds": "Measured: the wallbox reacts about 25–29 s after the command.",
           "phase_change_wait_seconds": "Measured: charging pauses about 35–45 s after the command for 10–15 s.",
           "surplus_reserve_w": "Increase only if the surplus exceeds the additional power of the next stage by this amount.",
-          "grid_import_protection_seconds": "If the average grid import stays above the limit for this long, power is reduced immediately without waiting for the full averaging window. At most the averaging window."
+          "grid_import_protection_seconds": "If the average grid import stays above the limit for this long, power is reduced immediately without waiting for the full averaging window. At most the averaging window.",
+          "reaction_confirm_seconds": "If the house load stays within the range of the expected new load for this long after a command, the wait ends early. If other consumers change the load, the full wait applies. 0 = off."
         }
       },
       "vehicles": {
