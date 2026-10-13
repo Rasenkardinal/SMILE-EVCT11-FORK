@@ -1,5 +1,10 @@
 # Changelog
 
+## Fork 0.11.1 – 2026-10-13
+
+- Slider-Entität: Anzeigename von „Zulässiges Defizit beim Laden“ auf
+  „Zulässiges Defizit“ verkürzt.
+
 ## Fork 0.11.0 – 2026-10-13
 
 - Modus 5: Neuer Slider „Zulässiges Defizit beim Laden“ (0–5.000 W,
