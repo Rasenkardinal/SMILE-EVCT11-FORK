@@ -1,5 +1,12 @@
 # Changelog
 
+## Fork 0.11.3 – 2026-10-13
+
+- Konfigurations- und Optionsdialoge: Hilfetexte (`data_description`) für
+  alle Parameter vervollständigt (Überwachungssensoren, PV-Regelung Modus 5
+  sowie Fahrzeugprofile) und mit konkreten Praxisbeispielen versehen
+  (Deutsch und Englisch).
+
 ## Fork 0.11.2 – 2026-10-13
 
 - Slider-Entität: `has_entity_name = False` gesetzt, sodass Home Assistant

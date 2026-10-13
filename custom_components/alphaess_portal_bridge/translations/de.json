@@ -50,6 +50,14 @@
           "household_power_entity": "Hauslast-Sensor",
           "grid_power_entity": "Sensor Netzbezug/Einspeisung",
           "battery_power_entity": "Sensor Hausakku Laden/Entladen"
+        },
+        "data_description": {
+          "update_interval_seconds": "Abfrageintervall für das AlphaESS-Cloudportal in Sekunden (5–300 s). Beispiel: 30 s bei G2T-Wallboxen für zügige Statusaktualisierungen; 120 s bei G1T zur Vermeidung von Portal-Drosselungen.",
+          "pv_power_entity": "Sensor für die aktuelle Photovoltaik-Erzeugung in W oder kW. Positiver Wert bei Erzeugung. Beispiel: sensor.solar_power oder sensor.pv_leistung (z. B. 4.500 W).",
+          "battery_soc_entity": "Sensor für den aktuellen Ladezustand des Hausakkus in Prozent. Beispiel: sensor.battery_soc oder sensor.speicher_soc (z. B. 75 %).",
+          "household_power_entity": "Sensor für die gesamte Hauslast inklusive Wallbox in W oder kW. Beispiel: sensor.house_load oder sensor.hausverbrauch (z. B. 800 W ohne bzw. 4.940 W mit Ladung).",
+          "grid_power_entity": "Sensor für den Netzfluss am Hausanschluss in W oder kW. Positiv = Netzbezug, negativ = Netzeinspeisung. Beispiel: sensor.grid_power oder sensor.netzleistung (z. B. +250 W Netzbezug oder -3.200 W Einspeisung).",
+          "battery_power_entity": "Optionaler Sensor für die Lade-/Entladeleistung des Hausakkus in W oder kW. Positiv = Entladen, negativ = Laden. Beispiel: sensor.battery_power (z. B. +1.500 W Entladung)."
         }
       },
       "control": {
@@ -73,21 +81,21 @@
           "sensor_recovery_seconds": "Gültige Sensorzeit vor Rückkehr"
         },
         "data_description": {
-          "active_vehicle_profile": "Fahrzeugprofil mit den Ladestufen (Phasen, Strom, Leistung), aus denen die Regelung wählt.",
-          "control_strategy": "Stufenregelung ändert pro Entscheidung eine Stufe (ruhiger); Direktregelung springt sofort auf die passende Stufe (schneller). Wirkt beim Erhöhen und Senken.",
-          "average_window_seconds": "Über diesen Zeitraum werden PV, Hauslast und Netzbezug gemittelt; erst danach wird regulär entschieden. Wirkt beim Erhöhen und Senken. Länger = ruhiger, aber träger.",
-          "unstable_average_window_seconds": "Gilt, solange eine als instabil markierte Stufe aktiv ist, damit das Pendeln keine weiteren Wechsel auslöst. Wirkt beim Erhöhen und Senken.",
-          "current_change_wait_seconds": "Pause nach einer Stromänderung oder einem fehlgeschlagenen Befehl, bevor neu gemittelt wird. Gemessen: Die Wallbox reagiert ca. 25–29 s nach dem Befehl. Wirkt in beide Richtungen.",
-          "phase_change_wait_seconds": "Pause nach einem Phasenwechsel oder Wechsel von/zu Modus 1. Gemessen: Die Ladung pausiert ca. 35–45 s nach dem Befehl für 10–15 s. Wirkt in beide Richtungen.",
-          "allowed_grid_import_w": "Leistung, um die die Ladung den PV-Überschuss dauerhaft übersteigen darf; gedeckt aus Hausakku oder Netz. Die Regelung rechnet mit Überschuss + diesem Wert – beim Starten, Erhöhen und Senken. 0 = nur PV-Überschuss. Der Mindest-SOC schützt den Hausakku weiterhin.",
-          "grid_import_limit_w": "Nur beim Senken: Der Netzbezugsschutz greift, wenn der mittlere Netzbezug das zulässige Defizit beim Laden um mehr als diesen Wert übersteigt. Höher = mehr Netzbezug wird toleriert, bevor gesenkt wird.",
-          "grid_import_protection_seconds": "Nur beim Senken: Liegt der mittlere Netzbezug so lange über der Grenze, wird sofort gesenkt, ohne den vollen Mittelungszeitraum abzuwarten. Länger = träger. Höchstens so lang wie der Mittelungszeitraum.",
-          "reaction_confirm_seconds": "Liegt die Hauslast nach einem Befehl so lange stabil im Bereich der erwarteten neuen Last, endet die Wartezeit vorzeitig. Ändern andere Verbraucher die Last, gilt die volle Wartezeit. 0 = aus.",
-          "surplus_reserve_w": "Nur beim Erhöhen: Erhöht wird nur, wenn der mittlere Überschuss die Leistung der nächsten Stufe um mindestens diesen Wert übersteigt. Höher = weniger Pendeln und Netzbezug, aber mehr Einspeisung.",
-          "min_battery_soc": "Unter diesem Ladestand des Hausakkus stellt die Regelung die Wallbox auf Modus 1 (eigene Überschussladung der Wallbox).",
-          "battery_soc_hysteresis": "Nach dem SOC-Schutz wird erst wieder geregelt, wenn der Hausakku den Mindest-SOC um diesen Wert übersteigt.",
-          "sensor_stale_seconds": "Liefert ein Sensor so lange keinen neuen Wert, gilt die Messung als ungültig und die Wallbox wird als Fallback auf Modus 1 gestellt.",
-          "sensor_recovery_seconds": "So lange müssen alle Sensoren wieder gültig sein, bevor die Regelung nach einem Sensorfehler weitermacht."
+          "active_vehicle_profile": "Fahrzeugprofil mit den Ladestufen (Phasen, Strom, gemessene Leistung), aus denen die Regelung wählt. Beispiel: Standardfahrzeug (1-phasig 6–16 A ab 1,38 kW, 3-phasig 6–16 A ab 4,14 kW).",
+          "control_strategy": "Stufenregelung ändert pro Entscheidung genau eine Stufe (ruhiger, fahrzeugschonend); Direktregelung springt sofort auf die höchstmögliche passende Stufe (schnellere PV-Ausnutzung). Wirkt beim Erhöhen und Senken. Beispiel: Bei Sprung von 1,5 kW auf 5 kW Überschuss schaltet Stufenregelung von 6 A auf 7 A, Direktregelung springt direkt auf 3-phasig 7 A.",
+          "average_window_seconds": "Über diesen Zeitraum werden PV, Hauslast und Netzbezug gleitend gemittelt; erst danach wird regulär entschieden. Wirkt beim Erhöhen und Senken. Länger = ruhiger, aber träger. Beispiel: 120 s glättet kurze Wolken oder das Einschalten der Kaffeemaschine (2.000 W für 1 Minute), ohne sofort die Ladung zu drosseln.",
+          "unstable_average_window_seconds": "Gilt, solange eine als instabil markierte Stufe aktiv ist, damit Lastpendeln keine weiteren Schaltvorgänge auslöst. Wirkt beim Erhöhen und Senken. Beispiel: 240 s bei 1-phasig 6 A, wenn das Onboard-Ladegerät des Autos bei Minimalstrom periodisch um 200 W schwankt.",
+          "current_change_wait_seconds": "Pause nach einer Stromänderung oder einem fehlgeschlagenen Befehl, bevor neu gemittelt wird. Gemessen: Die Wallbox reagiert ca. 25–29 s nach dem Befehl. Wirkt in beide Richtungen. Beispiel: 60 s gibt der Wallbox und dem Fahrzeug 30 s Reaktionszeit plus 30 s Zeit zum sauberen Einregeln.",
+          "phase_change_wait_seconds": "Pause nach einem Phasenwechsel oder Wechsel von/zu Modus 1. Gemessen: Die Ladung pausiert ca. 35–45 s nach dem Befehl für 10–15 s. Wirkt in beide Richtungen. Beispiel: 90 s fängt die 15-sekündige Ladepause beim Relais-Umschalten zwischen 1- und 3-phasig sicher ab.",
+          "allowed_grid_import_w": "Leistung, um die die Ladung den PV-Überschuss dauerhaft übersteigen darf; gedeckt aus Hausakku oder Netz. Die Regelung rechnet mit Überschuss + diesem Wert – beim Starten, Erhöhen und Senken. 0 = nur PV-Überschuss. Beispiel: 1.000 W erlaubt das Laden mit 2,4 kW (1-phasig 10 A) bereits ab 1,4 kW PV-Überschuss. Kann auch jederzeit live über den Slider „Zulässiges Defizit“ verstellt werden.",
+          "grid_import_limit_w": "Nur beim Senken: Der Netzbezugsschutz greift, wenn der mittlere Netzbezug das zulässige Defizit beim Laden um mehr als diesen Wert übersteigt. Höher = mehr Netzbezug wird toleriert. Beispiel: Bei 500 W zulässigem Defizit und 200 W Toleranz greift der Schutz erst ab 700 W echtem Netzbezug.",
+          "grid_import_protection_seconds": "Nur beim Senken: Liegt der mittlere Netzbezug so lange über der Grenze, wird sofort gesenkt, ohne den vollen Mittelungszeitraum abzuwarten. Länger = träger. Beispiel: 30 s senkt bei plötzlichem Herd- oder Backofeneinsatz (z. B. 3.000 W) schon nach 30 s ab, statt 120 s zu warten.",
+          "reaction_confirm_seconds": "Liegt die Hauslast nach einem Befehl so lange stabil im Bereich der erwarteten neuen Last, endet die Wartezeit vorzeitig. Ändern andere Verbraucher die Last, gilt die volle Wartezeit. 0 = aus. Beispiel: 10 s beendet die 60-s-Pause nach ca. 35 s, wenn das Auto nach 25 s nachweislich auf die neue Stufe gesprungen ist.",
+          "surplus_reserve_w": "Nur beim Erhöhen: Erhöht wird nur, wenn der mittlere Überschuss die Leistung der nächsten Stufe um mindestens diesen Wert übersteigt. Höher = weniger Pendeln und Netzbezug, aber mehr Netzeinspeisung. Beispiel: 200 W Reserve: Nächste Stufe braucht 4.140 W -> Erhöhung erst ab 4.340 W Ladebudget.",
+          "min_battery_soc": "Unter diesem Ladestand des Hausakkus stellt die Regelung die Wallbox auf Modus 1 (eigene Überschussladung der Wallbox) als Schutz vor Tiefentladung. Beispiel: 30 % hält den Hausakku für die Grundlast am Abend und in der Nacht frei.",
+          "battery_soc_hysteresis": "Nach dem SOC-Schutz wird erst wieder geregelt, wenn der Hausakku den Mindest-SOC um diesen Wert übersteigt. Verhindert ständiges Ein- und Ausschalten. Beispiel: 10 % Hysterese bei 30 % Mindest-SOC bedeutet: Rückkehr zur Regelung erst bei 40 % SOC.",
+          "sensor_stale_seconds": "Liefert ein Sensor so lange keinen neuen Wert, gilt die Messung als ungültig und die Wallbox wird als Sicherheits-Fallback auf Modus 1 gestellt. Beispiel: 30 s erkennt schnell einen ausgefallenen Smartmeter oder WLAN-Verbindungsabbrüche.",
+          "sensor_recovery_seconds": "So lange müssen alle Sensoren nach einem Ausfall wieder durchgehend gültige Werte liefern, bevor die Regelung weitermacht. Beispiel: 60 s stellt sicher, dass sich die Messwerte nach einem Sensor-Neustart stabilisiert haben."
         }
       },
       "vehicles": {
@@ -137,6 +145,11 @@
               "current_15": "15 A"
             }
           }
+        },
+        "data_description": {
+          "name": "Name des Fahrzeugs zur Identifikation im Auswahldialog. Beispiel: Tesla Model 3, Renault Zoe, ID.4 oder Standardfahrzeug.",
+          "unstable_stages": "Ladestufen, bei denen dieses Fahrzeug erfahrungsgemäß pendelt oder die Ladeleistung schwankt. Für diese Stufen gilt der längere Mittelungszeitraum. Beispiel: 1-phasig 6 A, falls der Bordlader bei Minimalstrom unruhig regelt.",
+          "excluded_stages": "Ladestufen, die die Regelung für dieses Fahrzeug niemals anfahren soll. Beispiel: 1-phasig 16 A (falls das Ladekabel auf 15 A begrenzt ist) oder 3-phasig 6 A (falls 3-phasiges Laden erst ab 8 A gewünscht ist)."
         }
       },
       "vehicle_edit": {
@@ -178,6 +191,11 @@
               "current_15": "15 A"
             }
           }
+        },
+        "data_description": {
+          "name": "Name des Fahrzeugs zur Identifikation im Auswahldialog. Beispiel: Tesla Model 3, Renault Zoe, ID.4 oder Standardfahrzeug.",
+          "unstable_stages": "Ladestufen, bei denen dieses Fahrzeug erfahrungsgemäß pendelt oder die Ladeleistung schwankt. Für diese Stufen gilt der längere Mittelungszeitraum. Beispiel: 1-phasig 6 A, falls der Bordlader bei Minimalstrom unruhig regelt.",
+          "excluded_stages": "Ladestufen, die die Regelung für dieses Fahrzeug niemals anfahren soll. Beispiel: 1-phasig 16 A (falls das Ladekabel auf 15 A begrenzt ist) oder 3-phasig 6 A (falls 3-phasiges Laden erst ab 8 A gewünscht ist)."
         }
       },
       "vehicle_select": {
