@@ -193,9 +193,22 @@ class TesterFeedbackScheduleTests(unittest.TestCase):
         for name in ("G1_MODES", "G2_MODES"):
             with self.subTest(mode_map=name):
                 self.assertEqual(
-                    namespace[name]["Benutzerdefinierte Ladeleistung"], 4
+                    namespace[name]["Benutzerdefiniert"], 4
                 )
+                self.assertNotIn("Benutzerdefinierte Ladeleistung", namespace[name])
                 self.assertNotIn("Kundenspezifische Ladeleistung", namespace[name])
+
+    def test_pv_mode_label(self):
+        source = ast.parse((COMPONENT / "const.py").read_text(encoding="utf-8"))
+        assignment = next(
+            node for node in source.body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "PV_MODE_OPTION"
+                for target in node.targets
+            )
+        )
+        self.assertEqual(ast.literal_eval(assignment.value), "PV-Eigenverbrauch")
 
     def test_only_custom_current_uses_slider_with_existing_limits(self):
         source_file = COMPONENT / "number.py"

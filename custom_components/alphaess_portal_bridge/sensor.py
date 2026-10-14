@@ -42,7 +42,7 @@ _MODE_LABELS = {
     1: "Langsamladung",
     2: "Schonladung / Standardleistung",
     3: "Schnellladung",
-    4: "Benutzerdefinierte Ladeleistung",
+    4: "Benutzerdefiniert",
 }
 _STRATEGY_LABELS = {
     0: "Manuell",

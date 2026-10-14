@@ -72,7 +72,7 @@
       },
       "control": {
         "title": "PV-Laderegelung (Modus 5)",
-        "description": "Einstellungen für HA-Lademodus 5. Aktiviert wird er im Select „Lademodus“ über „PV-Eigenverbrauch (Modus 5)“. Die Standardwerte beruhen auf dem Messzyklus vom 13.10.2026; Leistungsgrenzen und Hausakku-Werte sind vorläufige Vorschläge.",
+        "description": "Einstellungen für HA-Lademodus 5. Aktiviert wird er im Select „Lademodus“ über „PV-Eigenverbrauch“. Die Standardwerte beruhen auf dem Messzyklus vom 13.10.2026; Leistungsgrenzen und Hausakku-Werte sind vorläufige Vorschläge.",
         "data": {
           "active_vehicle_profile": "Aktives Fahrzeug",
           "control_strategy": "Regelungsart",

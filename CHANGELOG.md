@@ -1,5 +1,13 @@
 # Changelog
 
+## Fork 0.11.7 – 2026-10-14
+
+- Lademodus „Benutzerdefinierte Ladeleistung“ in „Benutzerdefiniert“ umbenannt.
+- Lademodus „PV-Eigenverbrauch (Modus 5)“ im Selector auf „PV-Eigenverbrauch“ verkürzt.
+- Zugehörige Sensoranzeigen, Zeitfenster-Selectoren, Meldungen und Hilfetexte
+  verwenden die neuen Namen. Regelungslogik, Modusnummern und Entitäts-IDs
+  bleiben unverändert.
+
 ## Fork 0.11.6 – 2026-10-13
 
 - Standardfahrzeug auf rechnerische Nennwerte zurückgesetzt:

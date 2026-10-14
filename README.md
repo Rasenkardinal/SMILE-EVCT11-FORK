@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.11.6 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.11.7 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -69,7 +69,7 @@ eigener Ladeleistungstabelle (1-/3-phasig, 6–15 A) sowie instabilen und
 ausgeschlossenen Stufen. Details: `docs/modus-5-pv-eigenverbrauch-design.md`.
 
 Ab **0.9.0** gibt es im Select „Lademodus“ bei G2T
-zusätzlich **PV-Eigenverbrauch (Modus 5)**. Home Assistant regelt dann Phasen
+zusätzlich **PV-Eigenverbrauch** (Modus 5). Home Assistant regelt dann Phasen
 und Ladestrom nach dem PV-Überschuss und dem aktiven Fahrzeugprofil
 (Direkt- oder Stufenregelung). Pausen, SOC-Schutz und Sensorfehler laufen über
 AlphaESS-Modus 1. Der Sensor **PV-Laderegelung** zeigt Zustand, Mittelwerte
@@ -94,13 +94,15 @@ Netzbezugsschutz greift erst oberhalb dieses Werts plus Toleranz (zulässiger mi
 Ab **0.11.0** lässt sich der Wert zusätzlich über den Slider „Zulässiger dauerhafter Netzbezug“
 (0–5.000 W) einstellen; er wirkt sofort ohne Neuladen der Integration.
 
-Die Fork-Version **0.11.6** wird als GitHub-Release **`v0.11.6`** für HACS
+Die Fork-Version **0.11.7** wird als GitHub-Release **`v0.11.7`** für HACS
 bereitgestellt. Sie setzt die Voreinstellungen des integrierten „Standardfahrzeugs“
 auf rein rechnerische Nennwerte (1p: 1.380–3.450 W, 3p: 4.140–10.350 W ohne Ausschlüsse),
 optimiert die Voreinstellungen der Regelungsparameter (Wartezeit Strom 40 s, Phasen 90 s,
 dauerhafter Netzbezug 200 W, mittlerer Netzbezug 500 W, Netzbezugsschutz 50 s, Reserve 50 W)
 und benennt `allowed_grid_import` einheitlich in „Zulässiger dauerhafter Netzbezug“ um.
-Insgesamt bestehen **120 automatisierte Tests**.
+Ab **0.11.7** heißen die Lademodi in Selectoren und zugehörigen Anzeigen
+„Benutzerdefiniert“ und „PV-Eigenverbrauch“; die Regelungslogik bleibt unverändert.
+Insgesamt bestehen **121 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.
@@ -123,7 +125,7 @@ beim Senden aktualisiert, unabhängig vom normalen Polling.
 
 **Ab 0.7.5:** Der zusätzliche Sensor **Letzte angeforderte Änderung** zeigt
 die lesbare Zusammenfassung der zuletzt angeforderten Einstellungen, zum
-Beispiel `Ladestrom: 10 A` oder `Lademodus: Benutzerdefinierte Ladeleistung`.
+Beispiel `Ladestrom: 10 A` oder `Lademodus: Benutzerdefiniert`.
 Bei Zeitfenster-Schreibvorgängen wird auch die Zeitrahmennummer angezeigt.
 Der Sensor beschreibt den Auftrag und behauptet keine Übernahme; dafür bleibt
 der API-/Portalstatussensor zuständig.
@@ -190,7 +192,7 @@ Dies ist ein Community-Projekt und keine offizielle AlphaESS-Integration. Die G2
 - Live-Status und Ladeleistung
 - Fahrzeug angeschlossen und Ladestecker verriegelt als Ja/Nein
 - Ladeeinstellung: **Manuell / Zeitgesteuertes Aufladen / Plug and Play**
-- Lademodus: **Langsamladung / Schonladung / Schnellladung / Benutzerdefinierte Ladeleistung**
+- Lademodus: **Langsamladung / Schonladung / Schnellladung / Benutzerdefiniert**
 - kundenspezifischer Ladestrom **6–16 A**
 - OBC-Phasenwahl **1 / 2 / 3**
 - Smart Mode mit Schutzprüfungen
@@ -291,7 +293,7 @@ Smart Mode wird nur für G2T angeboten. Beim Aktivieren prüft die Integration:
 - Zeitgesteuertes Aufladen darf nicht aktiv sein.
 - Die OBC-Phasenwahl muss auf **3-phasig** stehen.
 - Ein gültiger Lademodus muss ausgewählt sein; im Fork ist auch
-  **Benutzerdefinierte Ladeleistung** zulässig.
+  **Benutzerdefiniert** zulässig.
 
 Der Fork lässt das Smart-Mode-Flag beim Wechsel des Lademodus unverändert.
 Laut Betreiberbeobachtung wird Smart Mode bei kundenspezifischer Ladeleistung

@@ -226,13 +226,6 @@ class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
             "ConfigEntry": object,
             "EntityCategory": SimpleNamespace(DIAGNOSTIC="diagnostic"),
             "Any": object,
-            "_MODE_LABELS": {
-                0: "ECO-Ladung",
-                1: "Langsamladung",
-                2: "Schonladung / Standardleistung",
-                3: "Schnellladung",
-                4: "Benutzerdefinierte Ladeleistung",
-            },
             "_STRATEGY_LABELS": {
                 0: "Manuell",
                 1: "Zeitgesteuertes Aufladen",
@@ -240,8 +233,16 @@ class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
             },
             "_PHASE_LABELS": {1: "1-phasig", 2: "2-phasig", 3: "3-phasig"},
         }
+        mode_labels = next(
+            node for node in source.body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "_MODE_LABELS"
+                for target in node.targets
+            )
+        )
         module = ast.fix_missing_locations(
-            ast.Module(body=[formatter, cls], type_ignores=[])
+            ast.Module(body=[mode_labels, formatter, cls], type_ignores=[])
         )
         exec(compile(module, str(API_FILE.with_name("sensor.py")), "exec"), namespace)
         status = SimpleNamespace(state="Wird gesendet", attributes={})
@@ -261,13 +262,13 @@ class WriteStatusTests(unittest.IsolatedAsyncioTestCase):
         }
         self.assertEqual(
             entity.native_value,
-            "Ladestrom: 10 A; Lademodus: Benutzerdefinierte Ladeleistung; "
+            "Ladestrom: 10 A; Lademodus: Benutzerdefiniert; "
             "Zeitrahmen 1 – Ladestrom: 12 A",
         )
         attrs = entity.extra_state_attributes
         self.assertEqual(attrs["Änderungen"], [
             "Ladestrom: 10 A",
-            "Lademodus: Benutzerdefinierte Ladeleistung",
+            "Lademodus: Benutzerdefiniert",
             "Zeitrahmen 1 – Ladestrom: 12 A",
         ])
         self.assertIn("nicht deren Übernahme", attrs["Hinweis"])

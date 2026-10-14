@@ -16,7 +16,7 @@ Netzeinspeisung vorliegen, bevor das Fahrzeug lädt.
 
 Modus 5 ist eine **eigene Betriebsart der Home-Assistant-Integration**, kein
 neuer AlphaESS-API-Modus. Für die Wallbox wird weiterhin der AlphaESS-Modus 4
-„Benutzerdefinierte Ladeleistung“ verwendet. Der bisherige AlphaESS-Modus 1
+„Benutzerdefiniert“ verwendet. Der bisherige AlphaESS-Modus 1
 „Langsamladung“ dient als Fallback zur klassischen Überschussregelung.
 
 ## 2. Ausgangslage und gewünschtes Verhalten
@@ -330,7 +330,7 @@ ungeeignet.
 
 1. HA-Modus 5 ergänzen, ohne einen AlphaESS-API-Modus 5 zu senden.
 2. Beim Aktivieren von HA-Modus 5 den API-Modus 4
-   „Benutzerdefinierte Ladeleistung“ verwenden.
+   „Benutzerdefiniert“ verwenden.
 3. Modus 1 als klassische Überschussregelung für den definierten Sensor-Fallback
    verwenden.
 4. Die für Modus 5 erforderlichen Sensor-Entity-IDs in den
@@ -417,7 +417,7 @@ an Home Assistant). Sie legt die offenen Punkte aus Abschnitt 6 vorläufig so
 fest:
 
 - **Bedienung:** Das Select „Lademodus“ bietet bei G2T zusätzlich
-  „PV-Eigenverbrauch (Modus 5)“. Die Absicht „Modus 5 aktiv“ wird als Option
+  „PV-Eigenverbrauch“. Die Absicht „Modus 5 aktiv“ wird als Option
   `pv_mode_active` gespeichert und überlebt Neustarts. Wählt man einen anderen
   Modus, wird Modus 5 beendet und der gewählte AlphaESS-Modus geschrieben.
   Aktivierung nur bei G2T und wenn PV-Leistung, Hauslast, Netzfluss und

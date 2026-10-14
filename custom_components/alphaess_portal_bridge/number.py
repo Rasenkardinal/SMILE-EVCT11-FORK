@@ -192,7 +192,7 @@ class AlphaESSTimePeriodCurrentNumber(_CurrentNumberBase):
     async def async_set_native_value(self, value: float) -> None:
         if time_period(self.coordinator, self._index).get("chargeMode") != 4:
             raise HomeAssistantError(
-                "Wähle für diesen Zeitrahmen zuerst Benutzerdefinierte Ladeleistung"
+                "Wähle für diesen Zeitrahmen zuerst Benutzerdefiniert"
             )
         try:
             await self.coordinator.api.async_update_time_period(

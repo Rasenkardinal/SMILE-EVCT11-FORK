@@ -72,7 +72,7 @@
       },
       "control": {
         "title": "PV charging control (mode 5)",
-        "description": "Settings for HA charging mode 5, activated via the charging mode select option \"PV-Eigenverbrauch (Modus 5)\". Defaults are based on the measurement cycle of 2026-10-13; power limits and battery values are provisional proposals.",
+        "description": "Settings for HA charging mode 5, activated via the charging mode select option \"PV-Eigenverbrauch\". Defaults are based on the measurement cycle of 2026-10-13; power limits and battery values are provisional proposals.",
         "data": {
           "active_vehicle_profile": "Active vehicle",
           "control_strategy": "Control strategy",

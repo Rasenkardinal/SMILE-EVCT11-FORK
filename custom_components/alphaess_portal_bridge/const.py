@@ -48,7 +48,7 @@ CONF_ALLOWED_DEFICIT = "allowed_grid_import_w"
 # Persisted user intent "HA mode 5 active"; kept separate from the AlphaESS
 # mode actually written to the portal so fallbacks can return automatically.
 CONF_PV_MODE_ACTIVE = "pv_mode_active"
-PV_MODE_OPTION = "PV-Eigenverbrauch (Modus 5)"
+PV_MODE_OPTION = "PV-Eigenverbrauch"
 DEFAULT_UPDATE_INTERVAL_SECONDS = 120
 DEFAULT_G2T_UPDATE_INTERVAL_SECONDS = 30
 UPDATE_INTERVAL_MIN_SECONDS = 5
