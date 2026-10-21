@@ -1,5 +1,13 @@
 # Changelog
 
+## Fork 0.11.8 – 2026-10-21
+
+- Zwei Slider für den Akku-SOC-Schutz ergänzt: „Akku-Minimum (SOC)“
+  (0–100 %) und „Akku-Hysterese“ (1–50 %).
+- Beide Slider sind nur bei aktivem Modus 5 verfügbar, speichern in denselben
+  Optionen wie das Konfigurationsmenü und aktualisieren die laufende Regelung
+  sofort, ohne deren Mittelwerte zurückzusetzen.
+
 ## Fork 0.11.7 – 2026-10-14
 
 - Lademodus „Benutzerdefinierte Ladeleistung“ in „Benutzerdefiniert“ umbenannt.

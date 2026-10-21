@@ -217,9 +217,14 @@ class TesterFeedbackScheduleTests(unittest.TestCase):
             "NumberMode": SimpleNamespace(BOX="box", SLIDER="slider"),
             "UnitOfElectricCurrent": SimpleNamespace(AMPERE="A"),
             "UnitOfPower": SimpleNamespace(WATT="W"),
+            "PERCENTAGE": "%",
             "EntityCategory": SimpleNamespace(CONFIG="config"),
             "AlphaESSWallboxEntity": type("AlphaESSWallboxEntity", (), {}),
             "NumberEntity": type("NumberEntity", (), {}),
+            "CONTROL_NUMBER_SETTINGS": {
+                "min_battery_soc": (20, 0, 100, 1, "%"),
+                "battery_soc_hysteresis": (5, 1, 50, 1, "%"),
+            },
         }
         for node in source.body:
             if isinstance(node, ast.ClassDef):
@@ -355,6 +360,168 @@ class TesterFeedbackScheduleTests(unittest.TestCase):
             sensor_entity.coordinator = coord
             self.assertIs(deficit_entity.available, active)
             self.assertIs(sensor_entity.available, active)
+
+    def test_battery_protection_sliders_are_live_and_mode5_only(self):
+        source_file = COMPONENT / "number.py"
+        source = ast.parse(source_file.read_text(encoding="utf-8"))
+        class_names = {
+            "_PVModeControlNumber",
+            "AlphaESSMinimumBatterySocNumber",
+            "AlphaESSBatterySocHysteresisNumber",
+        }
+        class_nodes = [
+            node for node in source.body
+            if isinstance(node, ast.ClassDef) and node.name in class_names
+        ]
+
+        class EntityBase:
+            def __init__(self, coordinator, entry, unique_key):
+                self.coordinator = coordinator
+                self.unique_key = unique_key
+
+        namespace = {
+            "AlphaESSWallboxEntity": EntityBase,
+            "NumberEntity": type("NumberEntity", (), {}),
+            "NumberMode": SimpleNamespace(SLIDER="slider"),
+            "PERCENTAGE": "%",
+            "EntityCategory": SimpleNamespace(CONFIG="config"),
+            "CONTROL_NUMBER_SETTINGS": {
+                "min_battery_soc": (20, 0, 100, 1, "%"),
+                "battery_soc_hysteresis": (5, 1, 50, 1, "%"),
+            },
+        }
+        module = ast.fix_missing_locations(ast.Module(
+            body=[
+                ast.ImportFrom(
+                    module="__future__", names=[ast.alias(name="annotations")], level=0
+                ),
+                *class_nodes,
+            ],
+            type_ignores=[],
+        ))
+        exec(compile(module, str(source_file), "exec"), namespace)
+
+        settings = {"min_battery_soc": 20.0, "battery_soc_hysteresis": 5.0}
+        writes = []
+        manager = SimpleNamespace(
+            active=True,
+            control_setting=lambda key: settings[key],
+            set_control_setting=lambda key, value: (
+                writes.append((key, value)),
+                settings.__setitem__(key, value),
+            ),
+        )
+        coordinator = SimpleNamespace(pv_mode=manager)
+        cases = (
+            (
+                "AlphaESSMinimumBatterySocNumber",
+                "min_battery_soc",
+                "pv_minimum_battery_soc",
+                0,
+                100,
+            ),
+            (
+                "AlphaESSBatterySocHysteresisNumber",
+                "battery_soc_hysteresis",
+                "pv_battery_soc_hysteresis",
+                1,
+                50,
+            ),
+        )
+        for classname, key, unique_key, minimum, maximum in cases:
+            with self.subTest(entity=classname):
+                entity = namespace[classname](coordinator, object())
+                entity.async_write_ha_state = lambda: None
+                self.assertEqual(entity.unique_key, unique_key)
+                self.assertEqual(entity._attr_mode, "slider")
+                self.assertEqual(entity._attr_native_unit_of_measurement, "%")
+                self.assertEqual(entity._attr_native_min_value, minimum)
+                self.assertEqual(entity._attr_native_max_value, maximum)
+                self.assertEqual(entity.native_value, settings[key])
+                self.assertTrue(entity.available)
+                asyncio.run(entity.async_set_native_value(minimum + 1))
+                self.assertEqual(writes[-1], (key, minimum + 1))
+                manager.active = False
+                self.assertFalse(entity.available)
+                manager.active = True
+
+    def test_live_control_sliders_persist_and_update_active_controller(self):
+        source_file = COMPONENT / "pv_mode.py"
+        source = ast.parse(source_file.read_text(encoding="utf-8"))
+        manager_node = next(
+            node for node in source.body
+            if isinstance(node, ast.ClassDef) and node.name == "PVModeManager"
+        )
+        method_names = {
+            "control_setting",
+            "set_control_setting",
+            "allowed_deficit",
+            "set_allowed_deficit",
+        }
+        manager_node.body = [
+            node for node in manager_node.body
+            if isinstance(node, ast.FunctionDef) and node.name in method_names
+        ]
+        namespace = {
+            "CONTROL_NUMBER_SETTINGS": {
+                "allowed_grid_import_w": (200, 0, 5000, 50, "W"),
+                "min_battery_soc": (20, 0, 100, 1, "%"),
+                "battery_soc_hysteresis": (5, 1, 50, 1, "%"),
+            },
+            "CONF_ALLOWED_DEFICIT": "allowed_grid_import_w",
+            "_LIVE_CONTROL_SETTINGS": {
+                "allowed_grid_import_w",
+                "min_battery_soc",
+                "battery_soc_hysteresis",
+            },
+        }
+        module = ast.fix_missing_locations(ast.Module(
+            body=[
+                ast.ImportFrom(
+                    module="__future__", names=[ast.alias(name="annotations")], level=0
+                ),
+                manager_node,
+            ],
+            type_ignores=[],
+        ))
+        exec(compile(module, str(source_file), "exec"), namespace)
+
+        manager_cls = namespace["PVModeManager"]
+        manager = manager_cls.__new__(manager_cls)
+        manager.entry = SimpleNamespace(options={"keep": "value"})
+        manager.controller = SimpleNamespace(settings=SimpleNamespace(
+            allowed_grid_import_w=200,
+            min_battery_soc=20,
+            battery_soc_hysteresis=5,
+        ))
+        updates = []
+
+        def update_entry(entry, options):
+            updates.append(options)
+            entry.options = options
+
+        manager.hass = SimpleNamespace(config_entries=SimpleNamespace(
+            async_update_entry=update_entry
+        ))
+        notifications = []
+        manager._notify = lambda force: notifications.append(force)
+
+        manager.set_control_setting("min_battery_soc", 35)
+        manager.set_control_setting("battery_soc_hysteresis", 12)
+        manager.set_allowed_deficit(250)
+
+        self.assertEqual(manager.entry.options, {
+            "keep": "value",
+            "min_battery_soc": 35.0,
+            "battery_soc_hysteresis": 12.0,
+            "allowed_grid_import_w": 250.0,
+        })
+        self.assertEqual(manager.controller.settings.min_battery_soc, 35)
+        self.assertEqual(manager.controller.settings.battery_soc_hysteresis, 12)
+        self.assertEqual(manager.controller.settings.allowed_grid_import_w, 250)
+        self.assertEqual(manager.control_setting("min_battery_soc"), 35)
+        self.assertEqual(len(updates), 3)
+        self.assertEqual(notifications, [True, True, True])
 
 
 if __name__ == "__main__":

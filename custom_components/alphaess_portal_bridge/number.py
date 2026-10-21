@@ -9,7 +9,12 @@ from __future__ import annotations
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory, UnitOfElectricCurrent, UnitOfPower
+from homeassistant.const import (
+    EntityCategory,
+    PERCENTAGE,
+    UnitOfElectricCurrent,
+    UnitOfPower,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -30,6 +35,8 @@ async def async_setup_entry(
             AlphaESSHouseholdCurrentNumber(coordinator, entry),
             *(AlphaESSTimePeriodCurrentNumber(coordinator, entry, index) for index in range(3)),
             AlphaESSAllowedDeficitNumber(coordinator, entry),
+            AlphaESSMinimumBatterySocNumber(coordinator, entry),
+            AlphaESSBatterySocHysteresisNumber(coordinator, entry),
         ]
     )
 
@@ -80,6 +87,76 @@ class AlphaESSAllowedDeficitNumber(AlphaESSWallboxEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         self.coordinator.pv_mode.set_allowed_deficit(value)
         self.async_write_ha_state()
+
+
+class _PVModeControlNumber(AlphaESSWallboxEntity, NumberEntity):
+    """Base for mode-5 control settings exposed as live sliders."""
+
+    _attr_has_entity_name = False
+    _attr_mode = NumberMode.SLIDER
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_entity_category = EntityCategory.CONFIG
+    _option_key: str
+    _unique_key: str
+    _hint: str
+
+    def __init__(
+        self, coordinator: AlphaESSWallboxCoordinator, entry: ConfigEntry
+    ) -> None:
+        super().__init__(coordinator, entry, self._unique_key)
+        _, minimum, maximum, step, _ = CONTROL_NUMBER_SETTINGS[self._option_key]
+        self._attr_native_min_value = minimum
+        self._attr_native_max_value = maximum
+        self._attr_native_step = step
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.coordinator.pv_mode.add_listener(self.async_write_ha_state)
+        )
+
+    @property
+    def available(self) -> bool:
+        return self.coordinator.pv_mode.active
+
+    @property
+    def native_value(self) -> float:
+        return self.coordinator.pv_mode.control_setting(self._option_key)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str]:
+        return {"Hinweis": self._hint}
+
+    async def async_set_native_value(self, value: float) -> None:
+        self.coordinator.pv_mode.set_control_setting(self._option_key, value)
+        self.async_write_ha_state()
+
+
+class AlphaESSMinimumBatterySocNumber(_PVModeControlNumber):
+    """Mode 5 minimum state of charge for the home battery."""
+
+    _attr_name = "Akku-Minimum (SOC)"
+    _attr_icon = "mdi:battery-low"
+    _option_key = "min_battery_soc"
+    _unique_key = "pv_minimum_battery_soc"
+    _hint = (
+        "Unter diesem Akku-Ladestand greift der SOC-Schutz in Modus 5. "
+        "Wird sofort übernommen und entspricht der Integrationsoption."
+    )
+
+
+class AlphaESSBatterySocHysteresisNumber(_PVModeControlNumber):
+    """Mode 5 state-of-charge hysteresis for restarting control."""
+
+    _attr_name = "Akku-Hysterese"
+    _attr_icon = "mdi:battery-sync"
+    _option_key = "battery_soc_hysteresis"
+    _unique_key = "pv_battery_soc_hysteresis"
+    _hint = (
+        "Nach dem SOC-Schutz startet Modus 5 erst wieder oberhalb von "
+        "Akku-Minimum plus Hysterese. Wird sofort übernommen und entspricht "
+        "der Integrationsoption."
+    )
 
 
 class _CurrentNumberBase(AlphaESSWallboxEntity, NumberEntity):

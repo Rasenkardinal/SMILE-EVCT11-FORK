@@ -403,9 +403,11 @@ Der Netzbezugsschutz misst weiterhin den Netzbezug und greift erst oberhalb
 von X + Toleranz (zulässiger mittlerer Netzbezug).
 
 X lässt sich zusätzlich über die Slider-Entität „Zulässiger dauerhafter Netzbezug“
-(Kategorie Konfiguration) ändern. Der Slider schreibt dieselbe Option,
-lädt die Integration aber nicht neu: Die laufende Regelung übernimmt den Wert
-ab der nächsten Entscheidung, die gebildeten Mittelwerte bleiben erhalten.
+(Kategorie Konfiguration) ändern. Auch Mindest-SOC und SOC-Hysterese sind über
+die Slider „Akku-Minimum (SOC)“ und „Akku-Hysterese“ direkt einstellbar. Die
+Slider schreiben dieselben Optionen wie das Konfigurationsmenü, laden die
+Integration aber nicht neu: Die laufende Regelung übernimmt die Werte sofort,
+die gebildeten Mittelwerte bleiben erhalten.
 Sowohl der Slider als auch der Sensor „PV-Laderegelung“ sind nur verfügbar
 (aktiv), wenn Modus 5 im Lademodus-Select ausgewählt ist.
 

@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.11.7 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.11.8 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -93,16 +93,16 @@ Die Regelung rechnet dann mit PV-Überschuss + diesem Wert; der
 Netzbezugsschutz greift erst oberhalb dieses Werts plus Toleranz (zulässiger mittlerer Netzbezug).
 Ab **0.11.0** lässt sich der Wert zusätzlich über den Slider „Zulässiger dauerhafter Netzbezug“
 (0–5.000 W) einstellen; er wirkt sofort ohne Neuladen der Integration.
+Die Akku-Schutzwerte sind ebenfalls direkt verfügbar: „Akku-Minimum (SOC)“
+und „Akku-Hysterese“ lassen sich im Dashboard als Slider einstellen und werden
+ohne Neustart der Regelung übernommen.
 
-Die Fork-Version **0.11.7** wird als GitHub-Release **`v0.11.7`** für HACS
-bereitgestellt. Sie setzt die Voreinstellungen des integrierten „Standardfahrzeugs“
-auf rein rechnerische Nennwerte (1p: 1.380–3.450 W, 3p: 4.140–10.350 W ohne Ausschlüsse),
-optimiert die Voreinstellungen der Regelungsparameter (Wartezeit Strom 40 s, Phasen 90 s,
-dauerhafter Netzbezug 200 W, mittlerer Netzbezug 500 W, Netzbezugsschutz 50 s, Reserve 50 W)
-und benennt `allowed_grid_import` einheitlich in „Zulässiger dauerhafter Netzbezug“ um.
-Ab **0.11.7** heißen die Lademodi in Selectoren und zugehörigen Anzeigen
+Die Fork-Version **0.11.8** wird als GitHub-Release **`v0.11.8`** für HACS
+bereitgestellt. Neu sind die live einstellbaren Akku-Schutzslider „Akku-Minimum
+(SOC)“ (0–100 %) und „Akku-Hysterese“ (1–50 %). Sie sind nur bei aktivem Modus 5
+verfügbar und aktualisieren die laufende Regelung sofort. Die Lademodi heißen
 „Benutzerdefiniert“ und „PV-Eigenverbrauch“; die Regelungslogik bleibt unverändert.
-Insgesamt bestehen **121 automatisierte Tests**.
+Insgesamt bestehen **123 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.

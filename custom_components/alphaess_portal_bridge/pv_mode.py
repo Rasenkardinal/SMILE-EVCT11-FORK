@@ -50,6 +50,9 @@ from .vehicle_profiles import PROFILE_NAME, get_profiles
 
 _LOGGER = logging.getLogger(__name__)
 _NOTIFY_INTERVAL_SECONDS = 30
+_LIVE_CONTROL_SETTINGS = frozenset(
+    (CONF_ALLOWED_DEFICIT, "min_battery_soc", "battery_soc_hysteresis")
+)
 
 # (measurement field, option key, label, is power sensor)
 _SENSORS = (
@@ -146,26 +149,39 @@ class PVModeManager:
             self.entry, options={**self.entry.options, CONF_PV_MODE_ACTIVE: self.active}
         )
 
-    # -- permitted deficit (option and live number entity) ---------------
-    def allowed_deficit(self) -> float:
-        default = CONTROL_NUMBER_SETTINGS[CONF_ALLOWED_DEFICIT][0]
-        value = self.entry.options.get(CONF_ALLOWED_DEFICIT, default)
+    # -- live control settings (options and number entities) --------------
+    def control_setting(self, key: str) -> float:
+        if key not in _LIVE_CONTROL_SETTINGS:
+            raise ValueError(f"Unbekannte Live-Regelungseinstellung: {key}")
+        default = CONTROL_NUMBER_SETTINGS[key][0]
+        value = self.entry.options.get(key, default)
         return float(value) if isinstance(value, (int, float)) else float(default)
 
-    def set_allowed_deficit(self, value: float) -> None:
-        """Store the value and apply it to the running controller.
+    def set_control_setting(self, key: str, value: float) -> None:
+        """Persist a live value and update the controller without resetting averages."""
+        if key not in _LIVE_CONTROL_SETTINGS:
+            raise ValueError(f"Unbekannte Live-Regelungseinstellung: {key}")
 
-        Writing the options directly does not reload the entry, so the
-        running averages are kept and the next decision uses the new value.
-        """
-        _, minimum, maximum, _, _ = CONTROL_NUMBER_SETTINGS[CONF_ALLOWED_DEFICIT]
+        _, minimum, maximum, _, _ = CONTROL_NUMBER_SETTINGS[key]
         value = float(min(max(value, minimum), maximum))
         self.hass.config_entries.async_update_entry(
-            self.entry, options={**self.entry.options, CONF_ALLOWED_DEFICIT: value}
+            self.entry, options={**self.entry.options, key: value}
         )
         if self.controller is not None:
-            self.controller.settings.allowed_grid_import_w = value
+            if key == "allowed_grid_import_w":
+                self.controller.settings.allowed_grid_import_w = value
+            elif key == "min_battery_soc":
+                self.controller.settings.min_battery_soc = value
+            else:
+                self.controller.settings.battery_soc_hysteresis = value
         self._notify(force=True)
+
+    def allowed_deficit(self) -> float:
+        return self.control_setting(CONF_ALLOWED_DEFICIT)
+
+    def set_allowed_deficit(self, value: float) -> None:
+        """Store the value and apply it without resetting running averages."""
+        self.set_control_setting(CONF_ALLOWED_DEFICIT, value)
 
     async def async_activate(self) -> None:
         generation, _ = settings_object(self.coordinator)
