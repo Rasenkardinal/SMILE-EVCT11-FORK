@@ -417,6 +417,7 @@ class TesterFeedbackScheduleTests(unittest.TestCase):
                 "AlphaESSMinimumBatterySocNumber",
                 "min_battery_soc",
                 "pv_minimum_battery_soc",
+                "Akku-Minimum (SOC)",
                 0,
                 100,
             ),
@@ -424,15 +425,18 @@ class TesterFeedbackScheduleTests(unittest.TestCase):
                 "AlphaESSBatterySocHysteresisNumber",
                 "battery_soc_hysteresis",
                 "pv_battery_soc_hysteresis",
+                "Akku-Hysterese",
                 1,
                 50,
             ),
         )
-        for classname, key, unique_key, minimum, maximum in cases:
+        for classname, key, unique_key, name, minimum, maximum in cases:
             with self.subTest(entity=classname):
                 entity = namespace[classname](coordinator, object())
                 entity.async_write_ha_state = lambda: None
                 self.assertEqual(entity.unique_key, unique_key)
+                self.assertFalse(entity._attr_has_entity_name)
+                self.assertEqual(entity._attr_name, name)
                 self.assertEqual(entity._attr_mode, "slider")
                 self.assertEqual(entity._attr_native_unit_of_measurement, "%")
                 self.assertEqual(entity._attr_native_min_value, minimum)

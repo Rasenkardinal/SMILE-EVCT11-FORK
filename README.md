@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.11.8 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.11.9 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -97,11 +97,14 @@ Die Akku-Schutzwerte sind ebenfalls direkt verfügbar: „Akku-Minimum (SOC)“
 und „Akku-Hysterese“ lassen sich im Dashboard als Slider einstellen und werden
 ohne Neustart der Regelung übernommen.
 
-Die Fork-Version **0.11.8** wird als GitHub-Release **`v0.11.8`** für HACS
-bereitgestellt. Neu sind die live einstellbaren Akku-Schutzslider „Akku-Minimum
+Die Fork-Version **0.11.9** wird als GitHub-Release **`v0.11.9`** für HACS
+bereitgestellt. Seit 0.11.8 gibt es die live einstellbaren Akku-Schutzslider „Akku-Minimum
 (SOC)“ (0–100 %) und „Akku-Hysterese“ (1–50 %). Sie sind nur bei aktivem Modus 5
 verfügbar und aktualisieren die laufende Regelung sofort. Die Lademodi heißen
 „Benutzerdefiniert“ und „PV-Eigenverbrauch“; die Regelungslogik bleibt unverändert.
+Ab 0.11.9 ist die deaktivierte Gerätenamen-Voranstellung zusätzlich direkt an
+beiden Akku-Slider-Klassen festgelegt. In Home Assistant gespeicherte eigene
+Entitätsnamen werden nicht überschrieben.
 Insgesamt bestehen **123 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## Fork 0.11.9 – 2026-10-21
+
+- Namensbehandlung der beiden Akku-Schutzslider explizit an den konkreten
+  Entitätsklassen festgelegt (`has_entity_name = False`).
+- Regressionstest prüft die exakten Namen „Akku-Minimum (SOC)“ und
+  „Akku-Hysterese“ sowie die deaktivierte Gerätenamen-Voranstellung.
+- Bereits in Home Assistant gespeicherte benutzerdefinierte Namen bleiben
+  unberührt und müssen gegebenenfalls dort zurückgesetzt werden.
+
 ## Fork 0.11.8 – 2026-10-21
 
 - Zwei Slider für den Akku-SOC-Schutz ergänzt: „Akku-Minimum (SOC)“

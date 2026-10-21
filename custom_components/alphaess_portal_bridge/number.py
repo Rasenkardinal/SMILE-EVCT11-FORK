@@ -135,6 +135,7 @@ class _PVModeControlNumber(AlphaESSWallboxEntity, NumberEntity):
 class AlphaESSMinimumBatterySocNumber(_PVModeControlNumber):
     """Mode 5 minimum state of charge for the home battery."""
 
+    _attr_has_entity_name = False
     _attr_name = "Akku-Minimum (SOC)"
     _attr_icon = "mdi:battery-low"
     _option_key = "min_battery_soc"
@@ -148,6 +149,7 @@ class AlphaESSMinimumBatterySocNumber(_PVModeControlNumber):
 class AlphaESSBatterySocHysteresisNumber(_PVModeControlNumber):
     """Mode 5 state-of-charge hysteresis for restarting control."""
 
+    _attr_has_entity_name = False
     _attr_name = "Akku-Hysterese"
     _attr_icon = "mdi:battery-sync"
     _option_key = "battery_soc_hysteresis"
