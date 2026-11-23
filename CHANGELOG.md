@@ -13,6 +13,7 @@
   diesem Update aktiv, müssen frühere Werte einmalig neu eingestellt werden.
 - Regressionstests für Moduswechsel, Neustart, verzögerte Portalwerte und
   fehlgeschlagene Schreibaufträge ergänzt.
+- Ein Funktionstest an einer echten Wallbox steht noch aus.
 
 ## Fork 0.11.9 – 2026-10-21
 
