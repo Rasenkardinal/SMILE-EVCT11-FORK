@@ -91,20 +91,33 @@ class AlphaESSWallboxModeSelect(AlphaESSWallboxEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         pv_mode = self.coordinator.pv_mode
-        if option == PV_MODE_OPTION:
-            await pv_mode.async_activate()
-            self.async_write_ha_state()
-            return
-        generation, _ = settings_object(self.coordinator)
-        modes = G2_MODES if generation == "g2T" else G1_MODES
-        if option not in modes:
-            raise HomeAssistantError("Unbekannter Lademodus")
-        await pv_mode.async_deactivate()
-        self.async_write_ha_state()
-        try:
-            await self.coordinator.api.async_update_wallbox_settings(charge_mode=modes[option])
-        except (AuthenticationError, PortalConnectionError, ValueError) as err:
-            raise HomeAssistantError(str(err) or "Der Lademodus wurde vom Portal nicht übernommen") from err
+        async with pv_mode.mode_change_lock:
+            if option == PV_MODE_OPTION:
+                await pv_mode.async_activate()
+                self.async_write_ha_state()
+                return
+            generation, _ = settings_object(self.coordinator)
+            modes = G2_MODES if generation == "g2T" else G1_MODES
+            if option not in modes:
+                raise HomeAssistantError("Unbekannter Lademodus")
+            was_pv_active = pv_mode.active
+            if was_pv_active:
+                pv_mode.suspend()
+            try:
+                await self.coordinator.api.async_update_wallbox_settings(
+                    charge_mode=modes[option],
+                    restore_mode_settings=True,
+                    preserve_current_mode=not was_pv_active,
+                )
+                await pv_mode.async_deactivate()
+            except (AuthenticationError, PortalConnectionError, ValueError) as err:
+                raise HomeAssistantError(
+                    str(err) or "Der Lademodus wurde vom Portal nicht übernommen"
+                ) from err
+            finally:
+                if was_pv_active and pv_mode.active:
+                    pv_mode.resume()
+                self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
 

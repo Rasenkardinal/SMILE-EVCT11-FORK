@@ -7,6 +7,7 @@
 # ---------------------------------------------------------------------------
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections.abc import Callable
@@ -20,7 +21,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
 
-from .api import AuthenticationError, PortalConnectionError
+from .api import AuthenticationError, PortalConnectionError, PVControlSuspended
 from .const import (
     CONF_ACTIVE_VEHICLE_PROFILE,
     CONF_ALLOWED_DEFICIT,
@@ -74,6 +75,8 @@ class PVModeManager:
         self.entry = entry
         self.coordinator = coordinator
         self.active = bool(entry.options.get(CONF_PV_MODE_ACTIVE))
+        self.suspended = False
+        self.mode_change_lock = asyncio.Lock()
         self.controller: PVController | None = None
         self.profile_name = ""
         self.last_action: str | None = None
@@ -126,6 +129,17 @@ class PVModeManager:
             self._unsub()
             self._unsub = None
         self.controller = None
+
+    def suspend(self) -> None:
+        """Stop PV commands while switching to an original mode."""
+        self.suspended = True
+        self.stop()
+
+    def resume(self) -> None:
+        self.suspended = False
+        if self.active:
+            self._start_controller()
+            self._notify(force=True)
 
     def _start_controller(self) -> None:
         self.stop()
@@ -194,6 +208,13 @@ class PVModeManager:
             )
         if self.active and self.controller is not None:
             return
+        if not self.active:
+            try:
+                await self.coordinator.api.async_save_current_mode_settings()
+            except (AuthenticationError, PortalConnectionError, ValueError) as err:
+                raise HomeAssistantError(
+                    str(err) or "Die Einstellungen des Lademodus konnten nicht gesichert werden"
+                ) from err
         self.active = True
         self._persist()
         self._start_controller()
@@ -204,6 +225,7 @@ class PVModeManager:
         if not self.active:
             return
         self.active = False
+        self.suspended = False
         self._persist()
         self.stop()
         self._record("Modus 5 beendet")
@@ -279,6 +301,8 @@ class PVModeManager:
                 success = True
                 target = command.stage.label if command.stage else "Modus 1 (Überschuss)"
                 self._record(f"{target}: {command.reason}")
+            except PVControlSuspended:
+                _LOGGER.debug("Modus 5: veralteter Befehl beim Moduswechsel verworfen")
             except (AuthenticationError, PortalConnectionError, ValueError) as err:
                 _LOGGER.warning("Modus 5: Wallbox-Befehl fehlgeschlagen: %s", err)
                 self._record(f"Befehl fehlgeschlagen: {err}")
@@ -294,7 +318,7 @@ class PVModeManager:
         api = self.coordinator.api
         stage = command.stage
         if stage is None:
-            await api.async_update_wallbox_settings(charge_mode=MODE_SURPLUS)
+            await api.async_update_wallbox_settings(charge_mode=MODE_SURPLUS, pv_control=True)
             return
         changes: dict[str, int] = {}
         if wallbox.mode != MODE_CUSTOM:
@@ -304,7 +328,7 @@ class PVModeManager:
         if wallbox.current != stage.current:
             changes["charge_current"] = stage.current
         if changes:
-            await api.async_update_wallbox_settings(**changes)
+            await api.async_update_wallbox_settings(**changes, pv_control=True)
 
     # -- presentation ----------------------------------------------------
     def status(self) -> str:

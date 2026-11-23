@@ -32,6 +32,7 @@ from .const import (
     CONF_USERNAME,
     CONF_WALLBOX_SERIAL,
 )
+from .mode_settings import ModeSettings
 from .write_status import SettingPath, SettingsWriteStatus
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,6 +59,10 @@ class PortalConnectionError(Exception):
         self.status = status
         self.step = step
         super().__init__(f"Portal request failed during {step}: {status}")
+
+
+class PVControlSuspended(Exception):
+    """A queued PV command is no longer allowed to reach the portal."""
 
 
 def _serialize_settings_write(method):
@@ -91,6 +96,9 @@ def _serialize_settings_write(method):
                 # The user requested a newer current while this call waited.
                 # Only drop a request which never began its portal transaction.
                 return
+            if kwargs.get("pv_control") and not self._pv_control_allowed():
+                raise PVControlSuspended
+            self._mode_write_pending = self.write_status.readback_id is not None
             self.write_status.begin({
                 **kwargs,
                 **({"Zeitrahmen": args[0] + 1} if args else {}),
@@ -122,6 +130,10 @@ class AlphaESSPortalApi:
         self.write_status = SettingsWriteStatus()
         self._charge_current_request_id = 0
         self._settings_written_callback: Callable[[], None] | None = None
+        self.mode_settings: ModeSettings | None = None
+        self._pv_mode_active: Callable[[], bool] = lambda: False
+        self._pv_control_allowed: Callable[[], bool] = lambda: False
+        self._mode_write_pending = False
         self._username = config[CONF_USERNAME]
         self._password = config[CONF_PASSWORD]
         self._system_serial = config[CONF_SYSTEM_SERIAL]
@@ -347,6 +359,9 @@ class AlphaESSPortalApi:
         household_current: int | None = None,
         installer_control_allowed: bool | None = None,
         gun_line_self_lock_enabled: bool | None = None,
+        restore_mode_settings: bool = False,
+        preserve_current_mode: bool = True,
+        pv_control: bool = False,
     ) -> None:
         """Update G1T/G2T settings while retaining the complete portal document."""
         configuration = await self._async_get(
@@ -359,6 +374,38 @@ class AlphaESSPortalApi:
             raise PortalConnectionError(step="wallbox settings")
 
         selection = self.write_status.accepted_mode
+        memory = self.mode_settings
+        source_mode = selection[0] if selection is not None else settings.get("chargeMode")
+        if type(source_mode) in (int, float) and source_mode in (0, 1, 2, 3, 4):
+            source_mode = int(source_mode)
+        source_settings = dict(settings)
+        if memory is not None and generation is not None and type(source_mode) is int:
+            if (
+                self._mode_write_pending
+                and (
+                    not self._pv_mode_active()
+                    or (restore_mode_settings and not preserve_current_mode)
+                )
+                and preserve_current_mode
+            ):
+                source_settings.update(memory.get(generation, source_mode))
+                settings.update(memory.get(generation, source_mode))
+                if selection is not None and charge_mode is None and any(
+                    value is not None for value in (charge_current, obc_phase, smart_mode)
+                ):
+                    settings["chargeMode"] = source_mode
+            if restore_mode_settings and preserve_current_mode:
+                memory.save(generation, source_mode, source_settings)
+            if (
+                restore_mode_settings
+                and charge_mode is not None
+                and (charge_mode != source_mode or not preserve_current_mode)
+            ):
+                saved = memory.get(generation, charge_mode)
+                charge_current = saved.get("chargeCurrent", charge_current)
+                obc_phase = saved.get("obcPhase", obc_phase)
+                smart_mode = saved.get("smartMode", smart_mode)
+
         if charge_current is not None and charge_mode is None and selection is not None:
             # A stale GET must not undo the mode accepted just before this
             # user-triggered current write in the full-document PATCH.
@@ -372,7 +419,7 @@ class AlphaESSPortalApi:
                 generation == "g2T"
                 and (selection[0] if selection is not None else settings.get("chargeMode")) == 4
                 and charge_mode in {1, 2, 3}
-                and settings.get("smartMode") is True
+                and (smart_mode if smart_mode is not None else settings.get("smartMode")) is True
                 and smart_mode is not False
             ):
                 settings["obcPhase"] = 3
@@ -396,7 +443,7 @@ class AlphaESSPortalApi:
             if generation != "g2T" or obc_phase not in {1, 2, 3}:
                 raise ValueError("Nicht unterstützte OBC-Phasenwahl")
             if (
-                settings.get("smartMode") is True
+                (smart_mode if smart_mode is not None else settings.get("smartMode")) is True
                 and settings.get("chargeMode") != 4
                 and obc_phase != 3
             ):
@@ -414,7 +461,9 @@ class AlphaESSPortalApi:
                     raise ValueError(
                         "Smart Mode ist mit Zeitgesteuertem Aufladen nicht verfügbar"
                     )
-                if settings.get("obcPhase") != 3:
+                if settings.get("obcPhase") != 3 and not (
+                    restore_mode_settings and settings.get("chargeMode") == 4
+                ):
                     raise ValueError("Für Smart Mode muss die OBC-Phasenwahl auf 3-phasig stehen")
                 if settings.get("chargeMode") not in {1, 2, 3, 4}:
                     raise ValueError("Für Smart Mode muss ein gültiger Lademodus ausgewählt sein")
@@ -462,6 +511,10 @@ class AlphaESSPortalApi:
             and settings.get("obcPhase") != original_wallbox[generation].get("obcPhase")
         ):
             expected[(generation, "obcPhase")] = settings["obcPhase"]
+        if generation is not None:
+            for field in ("chargeCurrent", "smartMode"):
+                if field in settings and settings.get(field) != original_wallbox[generation].get(field):
+                    expected[(generation, field)] = settings[field]
         for requested, field in (
             (household_current, "houseHoldCurrent"),
             (installer_control_allowed, "allowInstallersControl"),
@@ -471,6 +524,42 @@ class AlphaESSPortalApi:
         await self._async_write_settings(
             configuration, payload, expected, step="wallbox settings"
         )
+        if (
+            memory is not None
+            and generation is not None
+            and not pv_control
+            and not self._pv_mode_active()
+            and (restore_mode_settings or any(
+                value is not None for value in (charge_current, obc_phase, smart_mode)
+            ))
+        ):
+            target_mode = charge_mode if charge_mode is not None else source_mode
+            if type(target_mode) is int:
+                memory.save(generation, target_mode, settings)
+
+    async def async_save_current_mode_settings(self) -> None:
+        """Capture the original mode before the PV controller takes ownership."""
+        async with self._settings_write_lock:
+            if self.mode_settings is None:
+                raise ValueError("Die Einstellungen der Lademodi sind nicht verfügbar")
+            configuration = await self._async_get(
+                f"/internal/v1/ess/{self._system_serial}", step="wallbox settings"
+            )
+            wallbox = self._find_wallbox_data(configuration, self._wallbox_serial)
+            generation, settings = self._settings_from_wallbox(wallbox)
+            if settings is None or generation is None:
+                raise PortalConnectionError(step="wallbox settings")
+            selection = self.write_status.accepted_mode
+            mode = selection[0] if selection is not None else settings.get("chargeMode")
+            if type(mode) not in (int, float) or mode not in (
+                (1, 2, 3, 4) if generation == "g2T" else (0, 1, 2, 3, 4)
+            ):
+                raise ValueError("Der aktuelle Lademodus ist nicht verfügbar")
+            mode = int(mode)
+            snapshot = dict(settings)
+            if self.write_status.readback_id is not None:
+                snapshot.update(self.mode_settings.get(generation, mode))
+            self.mode_settings.save(generation, mode, snapshot)
 
     @_serialize_settings_write
     async def async_update_time_period(

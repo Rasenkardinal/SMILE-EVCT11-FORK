@@ -1,5 +1,19 @@
 # Changelog
 
+## Fork 0.11.10 – 2026-11-23
+
+- Ladestrom und bei G2T Phasenwahl und Smart Mode werden für jeden
+  ursprünglichen Lademodus getrennt gespeichert und beim Zurückwechseln
+  über den Lademodus-Select wiederhergestellt.
+- PV-Eigenverbrauch sichert vor dem Start den bisherigen Modus und
+  überschreibt dessen Einstellungen nicht mit berechneten PV-Werten.
+  Wartende PV-Befehle werden während des Rückwechsels verworfen.
+- Gespeicherte Einstellungen bleiben nach einem Neustart erhalten und sind
+  der jeweiligen Wallbox zugeordnet. War PV-Eigenverbrauch bereits vor
+  diesem Update aktiv, müssen frühere Werte einmalig neu eingestellt werden.
+- Regressionstests für Moduswechsel, Neustart, verzögerte Portalwerte und
+  fehlgeschlagene Schreibaufträge ergänzt.
+
 ## Fork 0.11.9 – 2026-10-21
 
 - Namensbehandlung der beiden Akku-Schutzslider explizit an den konkreten

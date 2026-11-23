@@ -17,6 +17,7 @@ import re
 import runpy
 import typing
 import unittest
+from types import SimpleNamespace
 
 
 API_FILE = (
@@ -41,6 +42,10 @@ class PortalConnectionError(Exception):
         super().__init__(step)
 
 
+class PVControlSuspended(Exception):
+    pass
+
+
 def load_production_methods():
     """Compile the actual decorator and update methods without HA imports."""
     source = ast.parse(API_FILE.read_text(encoding="utf-8"))
@@ -55,6 +60,7 @@ def load_production_methods():
     )
     selected = {
         "async_update_wallbox_settings",
+        "async_save_current_mode_settings",
         "async_update_time_period",
         "_settings_from_wallbox",
         "_find_wallbox_data",
@@ -87,6 +93,7 @@ def load_production_methods():
         "Any": typing.Any,
         "PortalConnectionError": PortalConnectionError,
         "AuthenticationError": AuthenticationError,
+        "PVControlSuspended": PVControlSuspended,
         "SettingPath": tuple[str | int, ...],
     }
     exec(compile(module, str(API_FILE), "exec"), namespace)
@@ -130,6 +137,10 @@ def sample_configuration():
 class FakePortal(ProductionMethods):
     def __init__(self):
         self._settings_write_lock = asyncio.Lock()
+        self.mode_settings = None
+        self._pv_mode_active = lambda: False
+        self._pv_control_allowed = lambda: self._pv_mode_active()
+        self._mode_write_pending = False
         self.write_status = SettingsWriteStatus()
         self._charge_current_request_id = 0
         self._wallbox_serial = "ALP_TEST"
@@ -171,6 +182,220 @@ class FakePortal(ProductionMethods):
     @property
     def settings(self):
         return self.wallbox["g2T"]
+
+
+def make_mode_memory(entry):
+    source = ast.parse(API_FILE.with_name("mode_settings.py").read_text(encoding="utf-8"))
+    cls = next(node for node in source.body if isinstance(node, ast.ClassDef))
+    module = ast.fix_missing_locations(ast.Module(
+        body=[ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0), cls],
+        type_ignores=[],
+    ))
+    namespace = {"CONF_MODE_SETTINGS": "mode_settings"}
+    exec(compile(module, "mode_settings.py", "exec"), namespace)
+
+    def update_entry(target, *, options):
+        target.options = options
+
+    hass = SimpleNamespace(config_entries=SimpleNamespace(async_update_entry=update_entry))
+    return namespace["ModeSettings"](hass, entry, "ALP_TEST")
+
+
+class ModeSettingsTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.entry = SimpleNamespace(options={})
+        self.portal = FakePortal()
+        self.portal.mode_settings = make_mode_memory(self.entry)
+        self.active = False
+        self.portal._pv_mode_active = lambda: self.active
+
+    async def test_pv_control_preserves_custom_settings_across_restart_and_fallback(self):
+        portal = self.portal
+        portal.settings.update(chargeCurrent=14, obcPhase=2, smartMode=True)
+        await portal.async_save_current_mode_settings()
+        self.active = True
+        await portal.async_update_wallbox_settings(
+            charge_mode=4, charge_current=6, obc_phase=1, pv_control=True
+        )
+        await portal.async_update_wallbox_settings(charge_mode=1, pv_control=True)
+        self.assertEqual(self.entry.options["mode_settings"]["ALP_TEST:g2T:4"], {
+            "chargeCurrent": 14, "obcPhase": 2, "smartMode": True,
+        })
+        portal.mode_settings = make_mode_memory(self.entry)
+        self.active = False
+        await portal.async_update_wallbox_settings(
+            charge_mode=4, restore_mode_settings=True, preserve_current_mode=False
+        )
+        self.assertEqual(
+            {key: portal.settings[key] for key in ("chargeMode", "chargeCurrent", "obcPhase", "smartMode")},
+            {"chargeMode": 4, "chargeCurrent": 14, "obcPhase": 2, "smartMode": True},
+        )
+
+    async def test_return_from_pv_when_portal_is_still_in_custom_mode(self):
+        portal = self.portal
+        portal.settings.update(chargeCurrent=14, obcPhase=3)
+        await portal.async_save_current_mode_settings()
+        self.active = True
+        await portal.async_update_wallbox_settings(
+            charge_mode=4, charge_current=6, obc_phase=1, pv_control=True
+        )
+        portal._pv_control_allowed = lambda: False
+        await portal.async_update_wallbox_settings(
+            charge_mode=4, restore_mode_settings=True, preserve_current_mode=False
+        )
+        self.assertEqual((portal.settings["chargeCurrent"], portal.settings["obcPhase"]), (14, 3))
+        self.assertEqual(self.entry.options["mode_settings"]["ALP_TEST:g2T:4"]["chargeCurrent"], 14)
+
+    async def test_each_original_mode_restores_its_own_latest_values(self):
+        portal = self.portal
+        await portal.async_update_wallbox_settings(charge_current=12, obc_phase=2)
+        await portal.async_update_wallbox_settings(charge_mode=1, restore_mode_settings=True)
+        await portal.async_update_wallbox_settings(charge_current=8, obc_phase=3, smart_mode=True)
+        await portal.async_update_wallbox_settings(charge_mode=4, restore_mode_settings=True)
+        self.assertEqual(
+            (portal.settings["chargeCurrent"], portal.settings["obcPhase"], portal.settings["smartMode"]),
+            (12, 2, False),
+        )
+        await portal.async_update_wallbox_settings(charge_mode=1, restore_mode_settings=True)
+        self.assertEqual(
+            (portal.settings["chargeCurrent"], portal.settings["obcPhase"], portal.settings["smartMode"]),
+            (8, 3, True),
+        )
+
+    async def test_stale_read_does_not_replace_an_accepted_current(self):
+        portal = self.portal
+        stale = copy.deepcopy(portal.configuration)
+        await portal.async_update_wallbox_settings(charge_current=13)
+
+        async def stale_get(path, *, step):
+            return copy.deepcopy(stale)
+
+        portal._async_get = stale_get
+        await portal.async_update_wallbox_settings(obc_phase=2)
+        self.assertEqual(portal.settings["chargeCurrent"], 13)
+        self.assertEqual(self.entry.options["mode_settings"]["ALP_TEST:g2T:4"]["chargeCurrent"], 13)
+        await portal.async_update_wallbox_settings(charge_mode=1, restore_mode_settings=True)
+        self.assertEqual(self.entry.options["mode_settings"]["ALP_TEST:g2T:4"]["chargeCurrent"], 13)
+
+    async def test_failed_write_does_not_save_rejected_values(self):
+        portal = self.portal
+        await portal.async_save_current_mode_settings()
+        portal.fail_next_patch = True
+        with self.assertRaises(PortalConnectionError):
+            await portal.async_update_wallbox_settings(charge_current=15)
+        self.assertEqual(self.entry.options["mode_settings"]["ALP_TEST:g2T:4"]["chargeCurrent"], 6)
+
+    async def test_missing_portal_fields_do_not_erase_valid_saved_values(self):
+        portal = self.portal
+        portal.settings.update(chargeCurrent=12.0, obcPhase=2.0, chargeMode=4.0)
+        await portal.async_save_current_mode_settings()
+        del portal.settings["chargeCurrent"]
+        del portal.settings["obcPhase"]
+        await portal.async_save_current_mode_settings()
+        self.assertEqual(self.entry.options["mode_settings"]["ALP_TEST:g2T:4"], {
+            "chargeCurrent": 12, "obcPhase": 2, "smartMode": False,
+        })
+
+    async def test_saved_settings_are_isolated_by_wallbox_serial(self):
+        portal = self.portal
+        await portal.async_save_current_mode_settings()
+        other = make_mode_memory(self.entry)
+        other.serial = "ALP_OTHER"
+        self.assertEqual(other.get("g2T", 4), {})
+        other.save("g2T", 4, {"chargeCurrent": 15})
+        self.assertEqual(portal.mode_settings.get("g2T", 4)["chargeCurrent"], 6)
+
+    async def test_queued_pv_write_is_discarded_after_deactivation(self):
+        portal = self.portal
+        self.active = True
+        async with portal._settings_write_lock:
+            task = asyncio.create_task(portal.async_update_wallbox_settings(
+                charge_current=8, pv_control=True
+            ))
+            await asyncio.sleep(0)
+            self.active = False
+        with self.assertRaises(PVControlSuspended):
+            await task
+        self.assertEqual(portal.patches, [])
+
+    async def test_g1_modes_store_current_without_g2_fields(self):
+        portal = self.portal
+        portal.wallbox["g1T"] = {"chargeMode": 0, "chargeCurrent": 10}
+        del portal.wallbox["g2T"]
+        await portal.async_update_wallbox_settings(charge_mode=4, restore_mode_settings=True)
+        await portal.async_update_wallbox_settings(charge_current=15)
+        await portal.async_update_wallbox_settings(charge_mode=0, restore_mode_settings=True)
+        self.assertEqual(portal.wallbox["g1T"]["chargeCurrent"], 10)
+        await portal.async_update_wallbox_settings(charge_mode=4, restore_mode_settings=True)
+        self.assertEqual(portal.wallbox["g1T"]["chargeCurrent"], 15)
+
+
+class ModeSelectTests(unittest.IsolatedAsyncioTestCase):
+    async def test_pv_is_suspended_until_selection_succeeds_or_fails(self):
+        source = ast.parse(API_FILE.with_name("select.py").read_text(encoding="utf-8"))
+        cls = next(node for node in source.body if isinstance(node, ast.ClassDef)
+                   and node.name == "AlphaESSWallboxModeSelect")
+        module = ast.fix_missing_locations(ast.Module(
+            body=[ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0), cls],
+            type_ignores=[],
+        ))
+        namespace = {
+            "AlphaESSWallboxEntity": type("Entity", (), {}),
+            "SelectEntity": type("Select", (), {}),
+            "EntityCategory": SimpleNamespace(CONFIG="config"),
+            "G1_MODES": {"Benutzerdefiniert": 4},
+            "G2_MODES": {"Benutzerdefiniert": 4},
+            "PV_MODE_OPTION": "PV-Eigenverbrauch",
+            "settings_object": lambda coordinator: ("g2T", {}),
+            "HomeAssistantError": RuntimeError,
+            "AuthenticationError": AuthenticationError,
+            "PortalConnectionError": PortalConnectionError,
+        }
+        exec(compile(module, "select.py", "exec"), namespace)
+
+        class Manager:
+            def __init__(self):
+                self.active = True
+                self.suspended = False
+                self.mode_change_lock = asyncio.Lock()
+
+            def suspend(self):
+                self.suspended = True
+
+            def resume(self):
+                self.suspended = False
+
+            async def async_deactivate(self):
+                self.active = False
+                self.suspended = False
+
+        manager = Manager()
+        fail = True
+
+        async def update(**kwargs):
+            self.assertTrue(manager.active)
+            self.assertTrue(manager.suspended)
+            self.assertFalse(kwargs["preserve_current_mode"])
+            if fail:
+                raise PortalConnectionError(503)
+
+        entity = namespace["AlphaESSWallboxModeSelect"].__new__(
+            namespace["AlphaESSWallboxModeSelect"]
+        )
+        entity.coordinator = SimpleNamespace(
+            pv_mode=manager,
+            api=SimpleNamespace(async_update_wallbox_settings=update),
+            async_request_refresh=lambda: asyncio.sleep(0),
+        )
+        entity.async_write_ha_state = lambda: None
+        with self.assertRaises(RuntimeError):
+            await entity.async_select_option("Benutzerdefiniert")
+        self.assertTrue(manager.active)
+        self.assertFalse(manager.suspended)
+        fail = False
+        await entity.async_select_option("Benutzerdefiniert")
+        self.assertFalse(manager.active)
+        self.assertFalse(manager.suspended)
 
 
 class SettingsWriteTests(unittest.IsolatedAsyncioTestCase):

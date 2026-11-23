@@ -1,6 +1,6 @@
 # AlphaESS Wallbox Bridge – persönlicher Fork
 
-> **Fork-Version 0.11.9 (Beta)** – basierend auf dem Originalstand 0.5.7.
+> **Fork-Version 0.11.10 (Beta)** – basierend auf dem Originalstand 0.5.7.
 
 ## Zweck dieses Forks
 
@@ -77,6 +77,21 @@ und die letzte Aktion. Voraussetzung: PV-, Hauslast-, Netz- und SOC-Sensor
 in den Optionen ausgewählt. Die Regelung ist eine erste Fassung und im
 Praxisbetrieb noch nicht erprobt.
 
+Die Bridge speichert für jeden ursprünglichen Lademodus separat den zuletzt
+gültigen Ladestrom und bei G2T zusätzlich Phasenwahl und Smart Mode. Beim
+Wechsel über den Lademodus-Select werden bekannte Einstellungen wieder
+angewendet; beim ersten Wechsel in einen noch nicht gespeicherten Modus bleiben
+die aktuellen Portalwerte bestehen. Vor dem Start von PV-Eigenverbrauch wird
+der bisherige Modus gesichert; die berechneten PV-Werte überschreiben diese
+Sicherung nicht. Die Speicherung bleibt auch nach einem Neustart erhalten.
+War PV-Eigenverbrauch bereits vor dieser Änderung aktiv, können frühere Werte
+nicht nachträglich ermittelt werden und müssen einmalig eingestellt werden.
+Änderungen außerhalb der Bridge werden beim nächsten Verlassen des jeweiligen
+Modus erfasst, sofern das Portal sie bereits zurückmeldet. Zeitrahmen,
+Ladeeinstellung und Installationseinstellungen sind davon unabhängig.
+Die Speicherung nach einem Schreibauftrag bedeutet, dass die Portal-API den
+Auftrag angenommen hat, nicht dass die Wallbox ihn bereits physisch umgesetzt hat.
+
 Ab **0.9.1** endet die Wartezeit nach einem Befehl vorzeitig, sobald die
 Hauslast die erwartete neue Last stabil erreicht hat (Bestätigungszeit
 einstellbar, Standard 10 s, 0 = aus). Ändern andere Verbraucher die Hauslast,
@@ -97,7 +112,7 @@ Die Akku-Schutzwerte sind ebenfalls direkt verfügbar: „Akku-Minimum (SOC)“
 und „Akku-Hysterese“ lassen sich im Dashboard als Slider einstellen und werden
 ohne Neustart der Regelung übernommen.
 
-Die Fork-Version **0.11.9** wird als GitHub-Release **`v0.11.9`** für HACS
+Die Fork-Version **0.11.10** wird als GitHub-Release **`v0.11.10`** für HACS
 bereitgestellt. Seit 0.11.8 gibt es die live einstellbaren Akku-Schutzslider „Akku-Minimum
 (SOC)“ (0–100 %) und „Akku-Hysterese“ (1–50 %). Sie sind nur bei aktivem Modus 5
 verfügbar und aktualisieren die laufende Regelung sofort. Die Lademodi heißen
@@ -105,7 +120,7 @@ verfügbar und aktualisieren die laufende Regelung sofort. Die Lademodi heißen
 Ab 0.11.9 ist die deaktivierte Gerätenamen-Voranstellung zusätzlich direkt an
 beiden Akku-Slider-Klassen festgelegt. In Home Assistant gespeicherte eigene
 Entitätsnamen werden nicht überschrieben.
-Insgesamt bestehen **123 automatisierte Tests**.
+Insgesamt bestehen **133 automatisierte Tests**.
 Die Änderungshistorie steht im [Changelog](CHANGELOG.md).
 
 **Bis v0.7.3** war die globale Ladestrom-Eingabe auf Modus 4 beschränkt.
@@ -298,7 +313,9 @@ Smart Mode wird nur für G2T angeboten. Beim Aktivieren prüft die Integration:
 - Ein gültiger Lademodus muss ausgewählt sein; im Fork ist auch
   **Benutzerdefiniert** zulässig.
 
-Der Fork lässt das Smart-Mode-Flag beim Wechsel des Lademodus unverändert.
+Beim Wechsel des Lademodus stellt die Bridge einen zuvor für den Zielmodus
+gespeicherten Smart Mode wieder her; ohne gespeicherte Einstellung bleibt
+das Flag unverändert.
 Laut Betreiberbeobachtung wird Smart Mode bei kundenspezifischer Ladeleistung
 serverseitig ignoriert. Ein eingeschalteter Schalter bestätigt daher keine
 aktive Smart-Mode-Regelung in diesem Modus. Ob der Server das Flag beim Wechsel
@@ -313,9 +330,10 @@ Die Ausnahme bestätigt keine physische Umsetzung durch die Wallbox.
 
 Beim Rückwechsel von Modus 4 zu Modus 1–3 mit eingeschaltetem Smart Mode
 setzt die Integration die OBC-Sollwahl automatisch auf 3-phasig.
-Modus und Phasenwahl werden gemeinsam in einem Portal-Schreibvorgang gesendet;
-das Smart-Mode-Flag bleibt erhalten. Bei ausgeschaltetem Smart Mode oder
-gleichzeitigem Ausschalten bleibt die bisherige Phasenwahl unverändert.
+Modus und Phasenwahl werden gemeinsam in einem Portal-Schreibvorgang gesendet.
+Gespeicherte Einstellungen des Zielmodus haben Vorrang; ohne solche bleibt
+bei ausgeschaltetem Smart Mode oder gleichzeitigem Ausschalten die bisherige
+Phasenwahl unverändert.
 Die Rücklesung bestätigt nur die Portal-Konfiguration, keine physische Umschaltung.
 
 ## Bekannte Einschränkungen und offene Prüfungen

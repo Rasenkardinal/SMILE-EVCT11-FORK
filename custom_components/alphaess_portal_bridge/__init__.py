@@ -27,6 +27,7 @@ from .const import (
     UPDATE_INTERVAL_OPTIONS,
 )
 from .coordinator import AlphaESSWallboxCoordinator
+from .mode_settings import ModeSettings
 from .pv_mode import PVModeManager
 
 PLATFORMS: list[Platform] = [
@@ -100,6 +101,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinator.update_interval = timedelta(seconds=configured_interval)
 
     coordinator.pv_mode = PVModeManager(hass, entry, coordinator)
+    api.mode_settings = ModeSettings(hass, entry, coordinator.data.get("wallbox_serial"))
+    api._pv_mode_active = lambda: coordinator.pv_mode.active
+    api._pv_control_allowed = lambda: (
+        coordinator.pv_mode.active and not coordinator.pv_mode.suspended
+    )
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     system_serial = entry.data[CONF_SYSTEM_SERIAL]
 
